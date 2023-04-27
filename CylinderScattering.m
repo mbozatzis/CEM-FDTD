@@ -96,14 +96,16 @@ Db = dt/(m0*dx);
 % ee = zeros(N_x+1, N_y+1, N_T);
 % k = 1;
 % for t = 0:dt:Tmax
-%     for i = 2:N_x
+%     for i = 1:N_x+1
 %         E2yprev = Ez(i, 2);
 %         ENyprev = Ez(i, N_y);
-%         for j = 2:N_y
+%         for j = 1:N_y+1
 %             E2xprev = Ez(2, j);
 %             ENxprev = Ez(N_x, j);
-%             Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
-%                 + Hx(i,j-1) - Hx(i, j));
+%             if (i ~= 1) && (j ~= 1) && (i ~= N_x+1) && (j ~= N_y+1)
+%                 Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
+%                     + Hx(i,j-1) - Hx(i, j));
+%             end
 %             Ez(1, j) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, j) - Ez(1, j));
 %             Ez(N_x+1, j) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, j) - Ez(N_x+1, j));
 %         end
@@ -138,22 +140,68 @@ Db = dt/(m0*dx);
 % With second order Mur boundary conditions
 ee = zeros(N_x+1, N_y+1, N_T);
 k = 1;
-for t = 0:dt:Tmax
+
+Ez1_t1_x = Ez(1,:);
+Ez2_t1_x = Ez(2, :);
+Ezmax_t1_x = Ez(N_x+1,:);
+Ezmax2_t1_x = Ez(N_x, :);
+Ez1_t1_y = Ez(:,1);
+Ez2_t1_y = Ez(:, 2);
+Ezmax_t1_y = Ez(:, N_y+1);
+Ezmax2_t1_y = Ez(:, N_y);
+
+for t = 0:dt:Tmax*2
+    Ez1_t2_x = Ez1_t1_x;
+    Ez1_t1_x = Ez(1,:);
+    Ez2_t2_x = Ez2_t1_x;
+    Ez2_t1_x = Ez(2, :);
+
+    Ezmax_t2_x = Ezmax_t1_x;
+    Ezmax_t1_x = Ez(N_x+1,:);
+    Ezmax2_t2_x = Ezmax2_t1_x;
+    Ezmax2_t1_x = Ez(N_x, :);
+
+    Ez1_t2_y = Ez1_t1_y;
+    Ez1_t1_y = Ez(:,1);
+    Ez2_t2_y = Ez2_t1_y;
+    Ez2_t1_y = Ez(:, 2);
+
+    Ezmax_t2_y = Ezmax_t1_y;
+    Ezmax_t1_y = Ez(:, N_y+1);
+    Ezmax2_t2_y = Ezmax2_t1_y;
+    Ezmax2_t1_y = Ez(:, N_y);
+
+
     for i = 2:N_x
-        E2yprev = Ez(i, 2);
-        ENyprev = Ez(i, N_y);
         for j = 2:N_y
-            E2xprev = Ez(2, j);
-            ENxprev = Ez(N_x, j);
             Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
                 + Hx(i,j-1) - Hx(i, j));
-            Ez(1, j) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, j) - Ez(1, j));
-            Ez(N_x+1, j) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, j) - Ez(N_x+1, j));
-        end
-        Ez(i, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, 2) - Ez(i, 1));
-        Ez(i, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, N_y) - Ez(i, N_y+1));
-    end
 
+            Ez(1, j) = -Ez2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(2, j) + ...
+                Ez1_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ez1_t1_x(j)+Ez2_t1_x(j)) + ...
+                (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_x(j+1)-2*Ez1_t1_x(j) + ...
+                Ez1_t1_x(j-1)+ Ez2_t1_x(j+1)-2*Ez2_t1_x(j) +Ez2_t1_x(j-1));
+
+            Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
+                Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
+                (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
+                Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));  
+        end
+
+        Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
+            Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
+            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
+            Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
+
+        Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
+            Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
+            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
+            Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
+    end
+    Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
+    Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
+    Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
+    Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
 
     Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
 
