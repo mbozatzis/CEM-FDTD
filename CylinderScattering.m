@@ -58,8 +58,6 @@ Da = dt/(m0*dy);
 Db = dt/(m0*dx);
 
 % % Without boundary conditions (zero)
-% ee = zeros(N_x+1, N_y+1, N_T);
-% k = 1;
 % for t = 0:dt:Tmax
 %     for i = 2:N_x
 %         for j = 2:N_y
@@ -87,14 +85,10 @@ Db = dt/(m0*dx);
 %     colormap default;
 %     drawnow;
 % 
-%     ee(:, :, k) = Ez;
-%     k = k +1;
 % end
 
 
 % % With first order Mur boundary conditions
-% ee = zeros(N_x+1, N_y+1, N_T);
-% k = 1;
 % for t = 0:dt:Tmax
 %     for i = 1:N_x+1
 %         E2yprev = Ez(i, 2);
@@ -132,76 +126,140 @@ Db = dt/(m0*dx);
 %     colormap default;
 %     drawnow;
 % 
-%     ee(:, :, k) = Ez;
-%     k = k +1;
 % end
 
 
-% With second order Mur boundary conditions
-ee = zeros(N_x+1, N_y+1, N_T);
-k = 1;
+% % With second order Mur boundary conditions
+% 
+% Ez1_t1_x = Ez(1,:);
+% Ez2_t1_x = Ez(2, :);
+% Ezmax_t1_x = Ez(N_x+1,:);
+% Ezmax2_t1_x = Ez(N_x, :);
+% Ez1_t1_y = Ez(:,1);
+% Ez2_t1_y = Ez(:, 2);
+% Ezmax_t1_y = Ez(:, N_y+1);
+% Ezmax2_t1_y = Ez(:, N_y);
+% 
+% for t = 0:dt:Tmax
+%     Ez1_t2_x = Ez1_t1_x;
+%     Ez1_t1_x = Ez(1,:);
+%     Ez2_t2_x = Ez2_t1_x;
+%     Ez2_t1_x = Ez(2, :);
+% 
+%     Ezmax_t2_x = Ezmax_t1_x;
+%     Ezmax_t1_x = Ez(N_x+1,:);
+%     Ezmax2_t2_x = Ezmax2_t1_x;
+%     Ezmax2_t1_x = Ez(N_x, :);
+% 
+%     Ez1_t2_y = Ez1_t1_y;
+%     Ez1_t1_y = Ez(:,1);
+%     Ez2_t2_y = Ez2_t1_y;
+%     Ez2_t1_y = Ez(:, 2);
+% 
+%     Ezmax_t2_y = Ezmax_t1_y;
+%     Ezmax_t1_y = Ez(:, N_y+1);
+%     Ezmax2_t2_y = Ezmax2_t1_y;
+%     Ezmax2_t1_y = Ez(:, N_y);
+% 
+% 
+%     for i = 2:N_x
+%         for j = 2:N_y
+%             Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
+%                 + Hx(i,j-1) - Hx(i, j));
+% 
+%             Ez(1, j) = -Ez2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(2, j) + ...
+%                 Ez1_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ez1_t1_x(j)+Ez2_t1_x(j)) + ...
+%                 (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_x(j+1)-2*Ez1_t1_x(j) + ...
+%                 Ez1_t1_x(j-1)+ Ez2_t1_x(j+1)-2*Ez2_t1_x(j) +Ez2_t1_x(j-1));
+% 
+%             Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
+%                 Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
+%                 (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
+%                 Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));  
+%         end
+% 
+%         Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
+%             Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
+%             (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
+%             Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
+% 
+%         Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
+%             Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
+%             (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
+%             Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
+%     end
+%     Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
+%     Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
+%     Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
+%     Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
+% 
+%     Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
+% 
+%     for i = 1:N_x+1
+%         for j = 1:N_y
+%             Hx(i, j) = Hx(i, j) - Da*(Ez(i, j+1) - Ez(i, j));
+%         end
+%     end
+% 
+%     for i = 1:N_x
+%         for j = 1:N_y+1
+%             Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
+%         end
+%     end
+%     
+%     surf(Ez);
+%     colormap default;
+%     drawnow;
+%    
+% end
 
-Ez1_t1_x = Ez(1,:);
-Ez2_t1_x = Ez(2, :);
-Ezmax_t1_x = Ez(N_x+1,:);
-Ezmax2_t1_x = Ez(N_x, :);
-Ez1_t1_y = Ez(:,1);
-Ez2_t1_y = Ez(:, 2);
-Ezmax_t1_y = Ez(:, N_y+1);
-Ezmax2_t1_y = Ez(:, N_y);
 
-for t = 0:dt:Tmax*2
-    Ez1_t2_x = Ez1_t1_x;
-    Ez1_t1_x = Ez(1,:);
-    Ez2_t2_x = Ez2_t1_x;
-    Ez2_t1_x = Ez(2, :);
+% With PML
+Npml = 8;
+pow = 2;
+R = 10^(-6);
 
-    Ezmax_t2_x = Ezmax_t1_x;
-    Ezmax_t1_x = Ez(N_x+1,:);
-    Ezmax2_t2_x = Ezmax2_t1_x;
-    Ezmax2_t1_x = Ez(N_x, :);
+pml_h = 4*Npml + 2*N_x + 2*N_y;
+Hx_pml = zeros(Npml, N_y);
+Hy_pml = zeros(Npml, N_y+1);
+Ezx_pml = zeros(Npml, N_y);
+Ezy_pml = zeros(Npml, N_y);
 
-    Ez1_t2_y = Ez1_t1_y;
-    Ez1_t1_y = Ez(:,1);
-    Ez2_t2_y = Ez2_t1_y;
-    Ez2_t1_y = Ez(:, 2);
+se= -e0*c0*log(R)/(2^(pow+2)*dx*Npml^(pow+1));
+for i=1:Npml
+    sigmaE(i)=se*((2*i+1)^(pow+1)-(2*i-1)^(pow+1)) ;
+end
 
-    Ezmax_t2_y = Ezmax_t1_y;
-    Ezmax_t1_y = Ez(:, N_y+1);
-    Ezmax2_t2_y = Ezmax2_t1_y;
-    Ezmax2_t1_y = Ez(:, N_y);
+sh=m0/e0*se;
+for i=1:Npml
+    sigmaHx(i)=sh*((2*i+1)^(pow+1)-(2*i-1)^(pow+1));
+    sigmaHy(i)=sh*((2*(i+0.5)+1)^(pow+1)-(2*(i+0.5)-1)^(pow+1));
+end
 
+sigmaE=fliplr(sigmaE); 
+sigmaHx=fliplr(sigmaHx);
+sigmaHy=fliplr(sigmaHy);
 
-    for i = 2:N_x
+Ca_pml = exp(1).^(-sigmaE.*dt/e0);
+Cb_pml = (1-Ca_pml)./(sigmaE.*dx);
+Dax_pml = exp(1).^( -sigmaHx.*dt./m0);
+Day_pml = exp(1).^( -sigmaHy.*dt./m0);
+Dbx_pml = (1-Dax_pml)./(sigmaHx.*dx);
+Dby_pml = (1-Day_pml)./(sigmaHy.*dx);
+
+for t = 0:dt:Tmax*0.7
+
+    for i = 1:N_x
         for j = 2:N_y
-            Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
+            if i ~= 1
+                Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
                 + Hx(i,j-1) - Hx(i, j));
-
-            Ez(1, j) = -Ez2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(2, j) + ...
-                Ez1_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ez1_t1_x(j)+Ez2_t1_x(j)) + ...
-                (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_x(j+1)-2*Ez1_t1_x(j) + ...
-                Ez1_t1_x(j-1)+ Ez2_t1_x(j+1)-2*Ez2_t1_x(j) +Ez2_t1_x(j-1));
-
-            Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
-                Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
-                (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
-                Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));  
+            else
+                Ez(1, j) = Ca(1, j)*Ez(1, j) + Cb(1, j)*(Hy(1, j)-Hy_pml(Npml, j) ...
+                    + Hx(1,j-1) - Hx(1, j));
+            end
         end
-
-        Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
-            Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
-            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
-            Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
-
-        Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
-            Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
-            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
-            Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
     end
-    Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
-    Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
-    Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
-    Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
 
     Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
 
@@ -216,12 +274,28 @@ for t = 0:dt:Tmax*2
             Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
         end
     end
+
+    for i = 2:Npml
+        for j = 2:N_y-1
+            Ezx_pml(i, j) = Ca_pml(i)*Ezx_pml(i, j) + Cb_pml(i)*(Hy_pml(i, j) ...
+                - Hy_pml(i-1, j));
+            Ezy_pml(i, j) = Ca_pml(i)*Ezy_pml(i, j) + Cb_pml(i)*(Hx_pml(i, j-1) ...
+                - Hx_pml(i, j));
+            Hx_pml(i, j) = Dax_pml(i)*Hx_pml(i, j) + Dbx_pml(i)*(Ezx_pml(i, j) ...
+                + Ezy_pml(i, j) - Ezx_pml(i, j+1) - Ezy_pml(i, j+1));
+            if i ~= Npml
+                Hy_pml(i, j) = Day_pml(i)*Hy_pml(i, j) + Dby_pml(i)*(Ezx_pml(i+1, j) ...
+                    + Ezy_pml(i+1, j) - Ezx_pml(i, j) - Ezy_pml(i, j));
+            else
+                Hy_pml(i, j) = Day_pml(i)*Hy_pml(i, j) + Dby_pml(i)*(Ez(1, j) ...
+                    - Ezx_pml(i, j) - Ezy_pml(i, j));
+            end
+        end
+    end
     
     surf(Ez);
     colormap default;
     drawnow;
 
-    ee(:, :, k) = Ez;
-    k = k +1;
 end
 
