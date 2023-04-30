@@ -15,8 +15,8 @@ Y_m = 10*lambda0;
 % Cylinder position and characteristics
 x0 = 3*lambda0;
 R = lambda0;
-e_r = 3.4;
-sigma_r = 1.2;
+e_r = 1;%3.4;
+sigma_r = 0;%1.2;
 
 dx = lambda0/10;
 dy = lambda0/10;
@@ -219,11 +219,15 @@ Npml = 8;
 pow = 2;
 R = 10^(-6);
 
-pml_h = 4*Npml + 2*N_x + 2*N_y;
-Hx_pml = zeros(Npml, N_y);
-Hy_pml = zeros(Npml, N_y+1);
-Ezx_pml = zeros(Npml, N_y);
-Ezy_pml = zeros(Npml, N_y);
+Hx_pml_h = zeros(Npml, N_y+1, 2);
+Hy_pml_h = zeros(Npml, N_y+1, 2);
+Ezx_pml_h = zeros(Npml, N_y+1, 2);
+Ezy_pml_h = zeros(Npml, N_y+1, 2);
+
+Hx_pml_v = zeros(N_x+1, Npml, 2);
+Hy_pml_v = zeros(N_x+1, Npml, 2);
+Ezx_pml_v = zeros(N_x+1, Npml, 2);
+Ezy_pml_v = zeros(N_x+1, Npml, 2);
 
 se= -e0*c0*log(R)/(2^(pow+2)*dx*Npml^(pow+1));
 for i=1:Npml
@@ -236,6 +240,7 @@ for i=1:Npml
     sigmaHy(i)=sh*((2*(i+0.5)+1)^(pow+1)-(2*(i+0.5)-1)^(pow+1));
 end
 
+
 sigmaE=fliplr(sigmaE); 
 sigmaHx=fliplr(sigmaHx);
 sigmaHy=fliplr(sigmaHy);
@@ -247,18 +252,39 @@ Day_pml = exp(1).^( -sigmaHy.*dt./m0);
 Dbx_pml = (1-Dax_pml)./(sigmaHx.*dx);
 Dby_pml = (1-Day_pml)./(sigmaHy.*dx);
 
-for t = 0:dt:Tmax*0.7
+for t = 0:dt:Tmax
 
-    for i = 1:N_x
+    for i = 1:N_x+1
         for j = 2:N_y
-            if i ~= 1
+            if (i ~= 1) && (i ~= N_x+1)
                 Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
-                + Hx(i,j-1) - Hx(i, j));
-            else
-                Ez(1, j) = Ca(1, j)*Ez(1, j) + Cb(1, j)*(Hy(1, j)-Hy_pml(Npml, j) ...
+                    + Hx(i,j-1) - Hx(i, j));
+            elseif i == 1
+                Ez(1, j) = Ca(1, j)*Ez(1, j) + Cb(1, j)*(Hy(1, j)-Hy_pml_h(Npml, j, 1) ...
                     + Hx(1,j-1) - Hx(1, j));
+            elseif i == N_x+1
+                Ez(N_x+1, j) = Ca(N_x+1, j)*Ez(N_x+1, j) + Cb(N_x+1, j)*(Hy_pml_h(1, j, 2) ...
+                    - Hy(N_x, j) + Hx(N_x+1,j-1) - Hx(N_x+1, j));
             end
         end
+
+        if (i ~= 1) && (i ~= N_x + 1)
+            Ez(i, 1) = Ca(i, 1)*Ez(i, 1) + Cb(i, 1)*(Hy(i, 1)-Hy(i-1, 1) ...
+                    + Hx_pml_v(i, Npml, 1) - Hx(i, 1));
+            Ez(i, N_y+1) = Ca(i, N_y+1)*Ez(i, N_y+1) + Cb(i, N_y+1)*(Hy(i, N_y+1) ...
+                -Hy(i-1, N_y+1) + Hx(i, N_y) - Hx_pml_v(i, 1, 2));
+        elseif i == 1
+            Ez(i, 1) = Ca(i, 1)*Ez(i, 1) + Cb(i, 1)*(Hy(i, 1)-Hy_pml_h(Npml, 1, 1) ...
+                    + Hx_pml_v(i, Npml, 1) - Hx(i, 1));
+            Ez(i, N_y+1) = Ca(i, N_y+1)*Ez(i, N_y+1) + Cb(i, N_y+1)*(Hy(i, N_y+1) ...
+                -Hy_pml_h(Npml, N_y+1, 1) + Hx(i, N_y) - Hx_pml_v(i, 1, 2));
+        elseif i == N_x+1
+            Ez(i, 1) = Ca(i, 1)*Ez(i, 1) + Cb(i, 1)*(Hy_pml_h(1, 1, 2)-Hy(i-1, 1) ...
+                    + Hx_pml_v(i, Npml, 1) - Hx(i, 1));
+            Ez(i, N_y+1) = Ca(i, N_y+1)*Ez(i, N_y+1) + Cb(i, N_y+1)*(Hy_pml_h(1, N_y+1, 2) ...
+                -Hy(i-1, N_y+1) + Hx(i, N_y) - Hx_pml_v(i, 1, 2));
+        end
+        
     end
 
     Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
@@ -275,23 +301,85 @@ for t = 0:dt:Tmax*0.7
         end
     end
 
+    % PML (-x)
     for i = 2:Npml
-        for j = 2:N_y-1
-            Ezx_pml(i, j) = Ca_pml(i)*Ezx_pml(i, j) + Cb_pml(i)*(Hy_pml(i, j) ...
-                - Hy_pml(i-1, j));
-            Ezy_pml(i, j) = Ca_pml(i)*Ezy_pml(i, j) + Cb_pml(i)*(Hx_pml(i, j-1) ...
-                - Hx_pml(i, j));
-            Hx_pml(i, j) = Dax_pml(i)*Hx_pml(i, j) + Dbx_pml(i)*(Ezx_pml(i, j) ...
-                + Ezy_pml(i, j) - Ezx_pml(i, j+1) - Ezy_pml(i, j+1));
+        for j = 2:N_y
+            Ezx_pml_h(i, j, 1) = Ca_pml(i)*Ezx_pml_h(i, j, 1) + Cb_pml(i)*(Hy_pml_h(i, j, 1) ...
+                - Hy_pml_h(i-1, j, 1));
+            Ezy_pml_h(i, j, 1) = Ca_pml(i)*Ezy_pml_h(i, j, 1) + Cb_pml(i)*(Hx_pml_h(i, j-1, 1) ...
+                - Hx_pml_h(i, j, 1));
+            Hx_pml_h(i, j, 1) = Dax_pml(i)*Hx_pml_h(i, j, 1) + Dbx_pml(i)*(Ezx_pml_h(i, j, 1) ...
+                + Ezy_pml_h(i, j, 1) - Ezx_pml_h(i, j+1, 1) - Ezy_pml_h(i, j+1, 1));
             if i ~= Npml
-                Hy_pml(i, j) = Day_pml(i)*Hy_pml(i, j) + Dby_pml(i)*(Ezx_pml(i+1, j) ...
-                    + Ezy_pml(i+1, j) - Ezx_pml(i, j) - Ezy_pml(i, j));
+                Hy_pml_h(i, j, 1) = Day_pml(i)*Hy_pml_h(i, j, 1) + Dby_pml(i)*(Ezx_pml_h(i+1, j, 1) ...
+                    + Ezy_pml_h(i+1, j, 1) - Ezx_pml_h(i, j, 1) - Ezy_pml_h(i, j, 1));
             else
-                Hy_pml(i, j) = Day_pml(i)*Hy_pml(i, j) + Dby_pml(i)*(Ez(1, j) ...
-                    - Ezx_pml(i, j) - Ezy_pml(i, j));
+                Hy_pml_h(i, j, 1) = Day_pml(i)*Hy_pml_h(i, j, 1) + Dby_pml(i)*(Ez(1, j) ...
+                    - Ezx_pml_h(i, j, 1) - Ezy_pml_h(i, j, 1));
             end
         end
     end
+
+    % PML (+x)
+    for i = 1:Npml-1
+        k = Npml-i+1;
+        for j = 2:N_y
+            Ezy_pml_h(i, j, 2) = Ca_pml(k)*Ezy_pml_h(i, j, 2) + Cb_pml(k)*(Hx_pml_h(i, j-1, 2) ...
+                - Hx_pml_h(i, j, 2));
+            Hx_pml_h(i, j, 2) = Dax_pml(k)*Hx_pml_h(i, j, 2) + Dbx_pml(k)*(Ezx_pml_h(i, j, 2) ...
+                + Ezy_pml_h(i, j, 2) - Ezx_pml_h(i, j+1, 2) - Ezy_pml_h(i, j+1, 2));
+            Hy_pml_h(i, j, 2) = Day_pml(k)*Hy_pml_h(i, j, 2) + Dby_pml(k)*(Ezx_pml_h(i+1, j, 2) ...
+                + Ezy_pml_h(i+1, j, 2) - Ezx_pml_h(i, j, 2) - Ezy_pml_h(i, j, 2));
+            if i == 1
+                Ezx_pml_h(i, j, 2) = Ca_pml(k)*Ezx_pml_h(i, j, 2) + Cb_pml(k)*(Hy_pml_h(i, j, 2) ...
+                    - Hy(N_x, j));
+            else
+                Ezx_pml_h(i, j, 2) = Ca_pml(k)*Ezx_pml_h(i, j, 2) + Cb_pml(k)*(Hy_pml_h(i, j, 2) ...
+                    - Hy_pml_h(i-1, j, 2));
+            end
+        end
+    end
+
+    % PML (-y)
+    for i = 2:N_x-1
+        for j = 2:Npml
+            Ezx_pml_v(i, j, 1) = Ca_pml(j)*Ezx_pml_v(i, j, 1) + Cb_pml(j)*(Hy_pml_v(i, j, 1) ...
+                - Hy_pml_v(i-1, j, 1));
+            Ezy_pml_v(i, j, 1) = Ca_pml(j)*Ezy_pml_v(i, j, 1) + Cb_pml(j)*(Hx_pml_v(i, j-1, 1) ...
+                - Hx_pml_v(i, j, 1));
+            Hy_pml_v(i, j, 1) = Day_pml(j)*Hy_pml_v(i, j, 1) + Dby_pml(j)*(Ezx_pml_v(i+1, j, 1) ...
+                + Ezy_pml_v(i+1, j, 1) - Ezx_pml_v(i, j, 1) - Ezy_pml_v(i, j, 1));
+            if j ~= Npml
+                Hx_pml_v(i, j, 1) = Dax_pml(j)*Hx_pml_v(i, j, 1) + Dbx_pml(j)*(Ezx_pml_v(i, j, 1) ...
+                    + Ezy_pml_v(i, j, 1) - Ezx_pml_v(i, j+1, 1) - Ezy_pml_v(i, j+1, 1));
+            else
+                Hx_pml_v(i, j, 1) = Dax_pml(j)*Hx_pml_v(i, j, 1) + Dbx_pml(j)*(Ezx_pml_v(i, j, 1) ...
+                    + Ezy_pml_v(i, j, 1) - Ez(i, 1));
+            end
+        end
+    end
+
+    % PML (+y)
+    for i = 2:N_x-1
+        for j = 1:Npml-1
+            k = Npml-j+1;
+            Hx_pml_v(i, j, 2) = Dax_pml(k)*Hx_pml_v(i, j, 2) + Dbx_pml(k)*(Ezx_pml_v(i, j, 2) ...
+                + Ezy_pml_v(i, j, 2) - Ezx_pml_v(i, j+1, 2) - Ezy_pml_v(i, j+1, 2));
+            Hy_pml_v(i, j, 2) = Day_pml(k)*Hy_pml_v(i, j, 2) + Dby_pml(k)*(Ezx_pml_v(i+1, j, 2) ...
+                + Ezy_pml_v(i+1, j, 2) - Ezx_pml_v(i, j, 2) - Ezy_pml_v(i, j, 2));
+            Ezx_pml_v(i, j, 2) = Ca_pml(k)*Ezx_pml_v(i, j, 2) + Cb_pml(k)*(Hy_pml_v(i, j, 2) ...
+                - Hy_pml_v(i-1, j, 2));
+            if j == 1
+                Ezy_pml_v(i, j, 2) = Ca_pml(k)*Ezy_pml_v(i, j, 2) + Cb_pml(k)*(Hx(i, N_y) ...
+                    - Hx_pml_v(i, j, 2));
+            else
+                Ezy_pml_v(i, j, 2) = Ca_pml(k)*Ezy_pml_v(i, j, 2) + Cb_pml(k)*(Hx_pml_v(i, j-1, 2) ...
+                    - Hx_pml_v(i, j, 2));
+            end
+        end
+    end
+
+    
     
     surf(Ez);
     colormap default;
