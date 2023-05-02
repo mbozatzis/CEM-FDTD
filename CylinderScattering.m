@@ -46,6 +46,7 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
     e = e0*ones(N_x+1, N_y+1);
     sigma = zeros(N_x+1, N_y+1);
 
+
     % Create the cylinder
     n_lambda = lambda0/dx;
     i0 = N_x/2 - x0_nl*n_lambda;
@@ -60,8 +61,9 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
         end
     end
 
-%     surf(e) % Visualize the space
-%     surf(sigma) % Visualize the space
+    % surf(e) % Visualize the space
+    % surf(sigma) % Visualize the space
+ 
 
     Ca = (2*e-dt*sigma)./(2*e+dt*sigma);
     Cb = (2*dt./(2*e + dt * sigma))*(1/dx);
