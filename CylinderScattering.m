@@ -1,5 +1,5 @@
-function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
-    boundary, PML_options) 
+function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_options, ...
+    boundary, boundary_case, PML_options) 
     
     x0_nl = cylinder_options(1);
     R_nl = cylinder_options(2);
@@ -128,7 +128,7 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
     Dbx_pml = (1-Dax_pml)./(sigmaHx.*dx);
     Dby_pml = (1-Day_pml)./(sigmaHy.*dx);
 
-
+    l = 1;
     if boundary == "No-boundary"
         for t = 0:dt:Tmax
             for i = 2:N_x
@@ -151,11 +151,11 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                     Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
                 end
             end
-    
-            pcolor(Ez);
-            shading interp;
-            colormap gray;
-            drawnow;
+
+            eez(:, :, l) = Ez;
+            hhx(:, :, l) = Hx;
+            hhy(:, :, l) = Hy;
+            l = l + 1;
 
         end
 
@@ -172,10 +172,14 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                             + Hx(i,j-1) - Hx(i, j));
                     end
                     Ez(1, j) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, j) - Ez(1, j));
-                    Ez(N_x+1, j) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, j) - Ez(N_x+1, j));
+                    if boundary_case == "full"
+                        Ez(N_x+1, j) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, j) - Ez(N_x+1, j));
+                    end
                 end
-                Ez(i, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, 2) - Ez(i, 1));
-                Ez(i, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, N_y) - Ez(i, N_y+1));
+                if boundary_case == "full"
+                    Ez(i, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, 2) - Ez(i, 1));
+                    Ez(i, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(i, N_y) - Ez(i, N_y+1));
+                end
             end
 
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
@@ -191,11 +195,11 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                     Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
                 end
             end
-    
-            pcolor(Ez);
-            shading interp;
-            colormap gray;
-            drawnow;
+
+            eez(:, :, l) = Ez;
+            hhx(:, :, l) = Hx;
+            hhy(:, :, l) = Hy;
+            l = l + 1;
 
         end
 
@@ -232,26 +236,31 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                         (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_x(j+1)-2*Ez1_t1_x(j) + ...
                         Ez1_t1_x(j-1)+ Ez2_t1_x(j+1)-2*Ez2_t1_x(j) +Ez2_t1_x(j-1));
         
-                    Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
-                        Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
-                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
-                        Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));  
+                    if boundary_case == "full"
+                        Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
+                            Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
+                            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
+                            Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));
+                    end
                 end
+                if boundary_case == "full"
+                    Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
+                        Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
+                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
+                        Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
         
-                Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
-                    Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
-                    (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
-                    Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
-        
-                Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
-                    Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
-                    (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
-                    Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
+                    Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
+                        Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
+                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
+                        Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
+                end
             end
-            Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
-            Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
-            Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
-            Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
+            if boundary_case == "full"
+                Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
+                Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
+                Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
+                Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
+            end
 
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
 
@@ -266,11 +275,11 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                     Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
                 end
             end
-    
-            pcolor(Ez);
-            shading interp;
-            colormap gray;
-            drawnow;
+
+            eez(:, :, l) = Ez;
+            hhx(:, :, l) = Hx;
+            hhy(:, :, l) = Hy;
+            l = l + 1;
 
 
         end
@@ -289,13 +298,13 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                     elseif i == 1
                         Ez(1, j) = Ca(1, j)*Ez(1, j) + Cb(1, j)*(Hy(1, j)-Hy_pml_h(Npml, j, 1) ...
                             + Hx(1,j-1) - Hx(1, j));
-                    elseif i == N_x+1
+                    elseif (i == N_x+1) && boundary_case == "full"
                         Ez(N_x+1, j) = Ca(N_x+1, j)*Ez(N_x+1, j) + Cb(N_x+1, j)*(Hy_pml_h(1, j, 2) ...
                             - Hy(N_x, j) + Hx(N_x+1,j-1) - Hx(N_x+1, j));
                     end
                 end
         
-                if (i ~= 1) && (i ~= N_x + 1)
+                if (i ~= 1) && (i ~= N_x + 1) && (boundary_case == "full")
                     Ez(i, 1) = Ca(i, 1)*Ez(i, 1) + Cb(i, 1)*(Hy(i, 1)-Hy(i-1, 1) ...
                             + Hx_pml_v(i, Npml, 1) - Hx(i, 1));
                     Ez(i, N_y+1) = Ca(i, N_y+1)*Ez(i, N_y+1) + Cb(i, N_y+1)*(Hy(i, N_y+1) ...
@@ -304,10 +313,12 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                 
             end
         
-            Ez(1, N_y+1) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, N_y+1) - Ez(1, N_y+1));
-            Ez(N_x+1, 1) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, 1) - Ez(N_x+1, 1));
-            Ez(1, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(1, 2) - Ez(1, 1));
-            Ez(N_x+1, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x+1, N_y) - Ez(N_x+1, N_y+1));
+            if boundary_case == "full"
+                Ez(1, N_y+1) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, N_y+1) - Ez(1, N_y+1));
+                Ez(N_x+1, 1) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, 1) - Ez(N_x+1, 1));
+                Ez(1, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(1, 2) - Ez(1, 1));
+                Ez(N_x+1, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x+1, N_y) - Ez(N_x+1, N_y+1));
+            end
         
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
         
@@ -435,10 +446,10 @@ function [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options,
                 end
             end
 
-            pcolor(Ez);
-            shading interp;
-            colormap gray;
-            drawnow;
+            eez(:, :, l) = Ez;
+            hhx(:, :, l) = Hx;
+            hhy(:, :, l) = Hy;
+            l = l + 1;
 
         end
     end

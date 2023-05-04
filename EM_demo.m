@@ -4,13 +4,11 @@ clear
 cylinder_options = [3, 1, 3.4, 1.2];
 simulation_options = [10, 10, 10, 10*10^9];
 boundary = "PML";
+boundary_case = "full";
 PML_options = [8, 2, 10^(-6)];
 
 % To-dos
 % CEM: 
-% - Matrices with fields
-% - Case for PML only at one side
-% - How to make videos
 % - Start making main (plots comparing boundaries, comparing different
 % cylinders, time, PML options, put cylinder in different places, maybe an
 % angle diagram for the boundary conditions, show PML plot, show stability and
@@ -25,4 +23,30 @@ PML_options = [8, 2, 10^(-6)];
 % - Add complex materials
 
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
-    boundary,  PML_options);
+    boundary, boundary_case, PML_options);
+
+writerObj = VideoWriter('ElectricField.avi');
+writerObj.FrameRate = 25; 
+open(writerObj);
+
+for k = 1:size(Ez,3)
+    pcolor(Ez(:, :, k));
+    shading interp;
+    colormap gray;
+    
+    title(['Contour plot at slice ' num2str(k)]);
+    xlabel('X-axis');
+    ylabel('Y-axis');
+    
+    % Capture the frame and add it to the video
+    currFrame = getframe(gcf);
+    writeVideo(writerObj, currFrame);
+end
+
+close(writerObj);
+
+
+
+
+
+
