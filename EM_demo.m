@@ -1,10 +1,15 @@
 
 % To-dos
 % CEM: 
-% - Start making main (plots comparing boundaries, comparing different
-% cylinders, time, PML options, put cylinder in different places, maybe an
-% angle diagram for the boundary conditions, show PML plot, show stability and
+% - Start making main (PML options, 
+% maybe an angle diagram for the boundary conditions, 
+% show PML plot, show stability and
 % make it unstable in purpose, velocity plot (kdx and angle), maybe frequency?)
+%
+% done: comparing different cylinders, put cylinder in different places, 
+% plots comparing boundaries
+%
+% - PML needs optimization
 % - report with theoretical calculations
 %
 % Scattering:
@@ -17,9 +22,20 @@
 clc
 clear
 
+c0 = 3*10^8;
+f0 = 10*10^9;
+lambda0 = c0/f0;
+Xm_nl = 10;
+Ym_nl = 10;
+dx = lambda0/Xm_nl;
+n_lambda = lambda0/dx;
+
+theta = linspace(0, 2*pi);
+x_c = (Xm_nl/2-3)*n_lambda + n_lambda*cos(theta);
+y_c = (Ym_nl/2)*n_lambda + n_lambda*sin(theta);
 
 % Part 1 - No boundaries
-cylinder_options = [3, 1, 3.4, 1.2]; % [x0, R, e_r, sigma_r]
+cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
 simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
 boundary = "No-boundary"; % Type of boundary condition
 boundary_case = "full"; % Not in use in case of no-boundaries
@@ -31,14 +47,18 @@ PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
 Tn = 12; % Total simulation time: 12 T0
 i_max = size(Ez_nb, 3);
 ind_t1 = ceil((3/12)*i_max); % t1 = 3T0
-ind_t2 = ceil((10/12)*i_max); % t2 = 10T0
-ind_t3 = i_max; % t3 = 12T0 = TnT0
+ind_t2 = ceil((7/12)*i_max);
+ind_t3 = ceil((10/12)*i_max); % t2 = 10T0
+ind_t4 = i_max; % t3 = 12T0 = TnT0
+
 
 figure(1);
 sgtitle('Electric Field with zero boundary conditions');
 
 subplot(2, 2, 1);
-pcolor(Ez_nb(:, :, ind_t1));
+pcolor(Ez_nb(:, :, ind_t1)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -47,7 +67,20 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 subplot(2, 2, 2);
-pcolor(Ez_nb(:, :, ind_t2));
+pcolor(Ez_nb(:, :, ind_t2)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
+shading interp;
+colormap default;
+colorbar;
+title('Ez field at time: t1 = 7T0');
+xlabel('X-axis');
+ylabel('Y-axis');
+
+subplot(2, 2, 3);
+pcolor(Ez_nb(:, :, ind_t3)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -55,8 +88,10 @@ title('Ez field at time: t2 = 10T0');
 xlabel('X-axis');
 ylabel('Y-axis');
 
-subplot(2, 2, 3);
-pcolor(Ez_nb(:, :, ind_t3));
+subplot(2, 2, 4);
+pcolor(Ez_nb(:, :, ind_t4)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -66,7 +101,7 @@ ylabel('Y-axis');
 
 
 % Part 2 - Mur boundaries
-cylinder_options = [3, 1, 3.4, 1.2]; % [x0, R, e_r, sigma_r]
+cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
 simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
 boundary = "Mur-first-order"; % Type of boundary condition
 boundary_case = "not-full"; % boundaries only in the left side
@@ -84,7 +119,9 @@ figure(2);
 sgtitle('Electric Field with first order Mur boundary condition on left side');
 
 subplot(1, 2, 1);
-pcolor(Ez_m1(:, :, ind_t1));
+pcolor(Ez_m1(:, :, ind_t1)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -93,7 +130,9 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 subplot(1, 2, 2);
-pcolor(Ez_m1(:, :, ind_t2));
+pcolor(Ez_m1(:, :, ind_t2)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -109,7 +148,9 @@ figure(3);
 sgtitle('Electric Field with second order Mur boundary condition on left side');
 
 subplot(1, 2, 1);
-pcolor(Ez_m2(:, :, ind_t1));
+pcolor(Ez_m2(:, :, ind_t1)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -118,7 +159,9 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 subplot(1, 2, 2);
-pcolor(Ez_m2(:, :, ind_t2));
+pcolor(Ez_m2(:, :, ind_t2)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -128,7 +171,7 @@ ylabel('Y-axis');
 
 
 % Part 3 - PML
-cylinder_options = [3, 1, 3.4, 1.2]; % [x0, R, e_r, sigma_r]
+cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
 simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
 boundary = "PML"; % Type of boundary condition
 boundary_case = "not-full"; % boundaries only in the left side
@@ -146,7 +189,9 @@ figure(4);
 sgtitle('Electric Field with PML on left side');
 
 subplot(1, 2, 1);
-pcolor(Ez_p(:, :, ind_t1));
+pcolor(Ez_p(:, :, ind_t1)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -155,7 +200,9 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 subplot(1, 2, 2);
-pcolor(Ez_p(:, :, ind_t2));
+pcolor(Ez_p(:, :, ind_t2)');
+hold on;
+plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
@@ -164,14 +211,6 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 % Part 4 - Electric field at points of grid over time
-c0 = 3*10^8;
-f0 = 10*10^9;
-lambda0 = c0/f0;
-Xm_nl = 10;
-Ym_nl = 10;
-dx = lambda0/Xm_nl;
-n_lambda = lambda0/dx;
-
 x1 = n_lambda;
 x2 = n_lambda;
 y1 = ceil(Ym_nl/2);
