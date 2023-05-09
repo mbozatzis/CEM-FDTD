@@ -1,22 +1,21 @@
 
 % To-dos
 % CEM: 
-% - Start making main (PML options, 
-% maybe an angle diagram for the boundary conditions, 
-% show PML plot, show stability and
-% make it unstable in purpose, velocity plot (kdx and angle), maybe frequency?)
 %
-% done: comparing different cylinders, put cylinder in different places, 
-% plots comparing boundaries
-%
-% - PML needs optimization
-% - report with theoretical calculations
+% - Better dispersion demo
+% - PML needs optimization -> read book
+% - Split CylinderSacttering method to functions
+% - Comment the code, make the CylinderScattering method more be
+% - report with theoretical calculations - show instability (make unstable
+% in purpose)
 %
 % Scattering:
 % - TF/SF Formulation implementation
 % - PML at the corners
 % - Analytical solution implementation
 % - Simulation with different cylinders at different positions and angles
+% - Show PML plot (inside PML) - PML options
+% - Angle diagram for different boundaries (with TS/SF)
 % - Add complex materials
 
 clc

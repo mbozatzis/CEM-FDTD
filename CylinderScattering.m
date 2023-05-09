@@ -72,16 +72,6 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     Db = dt/(m0*dx);
 
 
-    % Mur second order parameters
-    Ez1_t1_x = Ez(1,:);
-    Ez2_t1_x = Ez(2, :);
-    Ezmax_t1_x = Ez(N_x+1,:);
-    Ezmax2_t1_x = Ez(N_x, :);
-    Ez1_t1_y = Ez(:,1);
-    Ez2_t1_y = Ez(:, 2);
-    Ezmax_t1_y = Ez(:, N_y+1);
-    Ezmax2_t1_y = Ez(:, N_y);
-
 
     % PML Parameters    
     Hx_pml_h = zeros(Npml, N_y, 2);
@@ -94,21 +84,12 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     Ezx_pml_v = zeros(N_x, Npml, 2);
     Ezy_pml_v = zeros(N_x, Npml, 2);
     
-    Hx_pml_c34 = zeros(Npml, Npml);
-    Hy_pml_c34 = zeros(Npml, Npml);
-    Ezx_pml_c34 = zeros(Npml, Npml);
-    Ezy_pml_c34 = zeros(Npml, Npml);
-    
-    Hx_pml_c23 = zeros(Npml, Npml);
-    Hy_pml_c23 = zeros(Npml, Npml);
-    Ezx_pml_c23 = zeros(Npml, Npml);
-    Ezy_pml_c23 = zeros(Npml, Npml);
     
     
     se= -e0*c0*log(Rpml)/(2^(pow+2)*dx*Npml^(pow+1));
     
     for i=1:Npml
-        sigmaE(i)=se*((2*i+1)^(pow+1)-(2*i-1)^(pow+1)) ;
+        sigmaE(i)=se*((2*i+1)^(pow+1)-(2*i-1)^(pow+1));
     end
     
     sh=m0/e0*se;
@@ -132,172 +113,76 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     l = 1;
     if boundary == "No-boundary"
         for t = 0:dt:Tmax
-            for i = 2:N_x
-                for j = 2:N_y
-                    Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
-                        + Hx(i,j-1) - Hx(i, j));
-                end
-            end
+            % Update Electric Field
+            Ez = updateEz(Ez, Hx, Hy, Ca, Cb, N_x, N_y);
 
+            % Update source
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
     
-            for i = 2:N_x
-                for j = 1:N_y
-                    Hx(i, j) = Hx(i, j) - Da*(Ez(i, j+1) - Ez(i, j));
-                end
-            end
-    
-            for i = 1:N_x
-                for j = 2:N_y
-                    Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
-                end
-            end
+            % Update Magnetic Fields
+            Hx = updateHx(Hx, Ez, Da, N_x, N_y);
+            Hy = updateHy(Hy, Ez, Db, N_x, N_y);
 
+            % Save the field values
             eez(:, :, l) = Ez;
             hhx(:, :, l) = Hx;
             hhy(:, :, l) = Hy;
             l = l + 1;
-
         end
 
     elseif boundary == "Mur-first-order"
-        for t = 0:dt:Tmax
-            for i = 2:N_x
-                E2xprev = Ez(2, i);
-                ENxprev = Ez(N_x, i);
-                E2yprev = Ez(i, 2);
-                ENyprev = Ez(i, N_y);
+        for t = 0:dt:Tmax         
+            % Update Electrical Field with First order Mur ABC
+            Ez = updateEzMurFirst(Ez, Hx, Hy, Ca, Cb, N_x, N_y, dx, dt, c0, boundary_case);
 
-                for j = 2:N_y
-                    Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
-                        + Hx(i,j-1) - Hx(i, j));
-                end
-
-                Ez(1, i) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, i) - Ez(1, i));
-                if boundary_case == "full"
-                    Ez(N_x+1, i) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, i) - Ez(N_x+1, i));
-                end
-                if boundary_case == "full"
-                    Ez(i, 1) = E2yprev + ((c0*dt-dy)/(c0*dt+dy))*(Ez(i, 2) - Ez(i, 1));
-                    Ez(i, N_y+1) = ENyprev + ((c0*dt-dy)/(c0*dt+dy))*(Ez(i, N_y) - Ez(i, N_y+1));
-                end
-            end
-
-            if boundary_case == "full"
-                Ez(1, N_y+1) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, N_y+1) - Ez(1, N_y+1));
-                Ez(N_x+1, 1) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, 1) - Ez(N_x+1, 1));
-                Ez(1, 1) = E2yprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(1, 2) - Ez(1, 1));
-                Ez(N_x+1, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x+1, N_y) - Ez(N_x+1, N_y+1));
-            end
-
+            % Update source
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
 
-            for i = 2:N_x+1
-                for j = 1:N_y
-                    Hx(i, j) = Hx(i, j) - Da*(Ez(i, j+1) - Ez(i, j));
-                end
-            end
-    
-            for i = 1:N_x
-                for j = 2:N_y+1
-                    Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
-                end
-            end
+            % Update Magnetic Fields
+            Hx = updateHx(Hx, Ez, Da, N_x, N_y);
+            Hy = updateHy(Hy, Ez, Db, N_x, N_y);
 
+            % Save the field values
             eez(:, :, l) = Ez;
             hhx(:, :, l) = Hx;
             hhy(:, :, l) = Hy;
             l = l + 1;
-
         end
 
     elseif boundary == "Mur-second-order"
-        for t = 0:dt:Tmax
-            Ez1_t2_x = Ez1_t1_x;
-            Ez1_t1_x = Ez(1,:);
-            Ez2_t2_x = Ez2_t1_x;
-            Ez2_t1_x = Ez(2, :);
-            
-            Ezmax_t2_x = Ezmax_t1_x;
-            Ezmax_t1_x = Ez(N_x+1,:);
-            Ezmax2_t2_x = Ezmax2_t1_x;
-            Ezmax2_t1_x = Ez(N_x, :);
-            
-            Ez1_t2_y = Ez1_t1_y;
-            Ez1_t1_y = Ez(:,1);
-            Ez2_t2_y = Ez2_t1_y;
-            Ez2_t1_y = Ez(:, 2);
-            
-            Ezmax_t2_y = Ezmax_t1_y;
-            Ezmax_t1_y = Ez(:, N_y+1);
-            Ezmax2_t2_y = Ezmax2_t1_y;
-            Ezmax2_t1_y = Ez(:, N_y);
-            
-            
-            for i = 2:N_x
-                for j = 2:N_y
-                    Ez(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
-                        + Hx(i,j-1) - Hx(i, j));
-        
-                    Ez(1, j) = -Ez2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(2, j) + ...
-                        Ez1_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ez1_t1_x(j)+Ez2_t1_x(j)) + ...
-                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_x(j+1)-2*Ez1_t1_x(j) + ...
-                        Ez1_t1_x(j-1)+ Ez2_t1_x(j+1)-2*Ez2_t1_x(j) +Ez2_t1_x(j-1));
-        
-                    if boundary_case == "full"
-                        Ez(N_x+1, j) = -Ezmax2_t2_x(j)-((dx-c0*dt)/(dx+c0*dt))*(Ez(N_x, j) + ...
-                            Ezmax_t2_x(j)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_x(j)+Ezmax2_t1_x(j)) + ...
-                            (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_x(j+1)-2*Ezmax_t1_x(j) + ...
-                            Ezmax_t1_x(j-1)+ Ezmax2_t1_x(j+1)-2*Ezmax2_t1_x(j) +Ezmax2_t1_x(j-1));
-                    end
-                end
-                if boundary_case == "full"
-                    Ez(i, 1) = -Ez2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, 2) + ...
-                        Ez1_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ez1_t1_y(i)+Ez2_t1_y(i)) + ...
-                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ez1_t1_y(i+1)-2*Ez1_t1_y(i) + ...
-                        Ez1_t1_y(i-1)+ Ez2_t1_y(i+1)-2*Ez2_t1_y(i) +Ez2_t1_y(i-1));
-        
-                    Ez(i, N_y+1) = -Ezmax2_t2_y(i)-((dx-c0*dt)/(dx+c0*dt))*(Ez(i, N_y) + ...
-                        Ezmax_t2_y(i)) + (2*dx/(dx+c0*dt))*(Ezmax_t1_y(i)+Ezmax2_t1_y(i)) + ...
-                        (dx*(c0*dt)^2/(2*dy^2*(dx+c0*dt)))*(Ezmax_t1_y(i+1)-2*Ezmax_t1_y(i) + ...
-                        Ezmax_t1_y(i-1)+ Ezmax2_t1_y(i+1)-2*Ezmax2_t1_y(i) +Ezmax2_t1_y(i-1));
-                end
-            end
-            if boundary_case == "full"
-                Ez(1, 1) = Ez2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, 1) - Ez1_t1_x(1));
-                Ez(1, N_y+1) = Ezmax2_t1_x(2) - (dx-c0*dt)/(dx+c0*dt)*(Ez(2, N_y+1) - Ezmax_t1_x(1));
-                Ez(N_x+1, 1) = Ez2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, 2) - Ez1_t1_y(N_x+1));
-                Ez(N_x+1, N_y+1) = Ezmax2_t1_y(N_x) - (dx-c0*dt)/(dx+c0*dt)*(Ez(N_x+1, N_y) - Ezmax_t1_y(N_x+1));
+        for t = 0:dt:Tmax 
+            % Update Electrical Field with Second Order Mur ABC
+            if l ~= 1
+                Ez_prev = eez(:, :, l-1);
+                Ez = updateEzMurSecond(Ez, Ez_prev, Hx, Hy, Ca, Cb, N_x, N_y, dx, dy, dt, c0, boundary_case);
+            else
+                Ez = updateEzMurSecond(Ez, Ez, Hx, Hy, Ca, Cb, N_x, N_y, dx, dy, dt, c0, boundary_case);
             end
 
+            % Update source
             Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
 
-            for i = 2:N_x
-                for j = 1:N_y
-                    Hx(i, j) = Hx(i, j) - Da*(Ez(i, j+1) - Ez(i, j));
-                end
-            end
-    
-            for i = 1:N_x
-                for j = 2:N_y
-                    Hy(i, j) = Hy(i, j) + Db*(Ez(i+1, j) - Ez(i, j));
-                end
-            end
+            % Update Magnetic Fields
+            Hx = updateHx(Hx, Ez, Da, N_x, N_y);
+            Hy = updateHy(Hy, Ez, Db, N_x, N_y);
 
+            % Save the field values
             eez(:, :, l) = Ez;
             hhx(:, :, l) = Hx;
             hhy(:, :, l) = Hy;
             l = l + 1;
-
-
         end
 
     elseif boundary == "PML"
         for t = 0:dt:Tmax
+            
+            % Save previous Electric field values
             E2yprev = Ez(1, 2);
             ENyprev = Ez(N_x+1, N_y);
             E2xprev = Ez(2, N_y+1);
             ENxprev = Ez(N_x, 1);
+
+            % Update electric field with PML
             for i = 1:N_x+1
                 for j = 2:N_y
                     if (i ~= 1) && (i ~= N_x+1)
@@ -306,7 +191,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                     elseif i == 1
                         Ez(1, j) = Ca(1, j)*Ez(1, j) + Cb(1, j)*(Hy(1, j)-Hy_pml_h(Npml, j, 1) ...
                             + Hx(1,j-1) - Hx(1, j));
-                    elseif (i == N_x+1) && boundary_case == "full"
+                    elseif (i == N_x+1) && (boundary_case == "full")
                         Ez(N_x+1, j) = Ca(N_x+1, j)*Ez(N_x+1, j) + Cb(N_x+1, j)*(Hy_pml_h(1, j, 2) ...
                             - Hy(N_x, j) + Hx(N_x+1,j-1) - Hx(N_x+1, j));
                     end
@@ -321,6 +206,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                 
             end
         
+            % Mur first order boundaries at corners
             if boundary_case == "full"
                 Ez(1, N_y+1) = E2xprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(2, N_y+1) - Ez(1, N_y+1));
                 Ez(N_x+1, 1) = ENxprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x, 1) - Ez(N_x+1, 1));
@@ -328,10 +214,10 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                 Ez(N_x+1, N_y+1) = ENyprev + ((c0*dt-dx)/(c0*dt+dx))*(Ez(N_x+1, N_y) - Ez(N_x+1, N_y+1));
             end
         
-            Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);
+            % Update source
+            Ez(N_x/2, N_y/2) = sin(2*pi*f0*t);       
         
-        
-            % PML (-x) Electric
+            % Update PML (-x) Electric
             for i = 2:Npml
                 for j = 2:N_y-1
                     k = i;
@@ -343,7 +229,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
             end
             
         
-            % PML (+x) Electric
+            % Update PML (+x) Electric
             for i = 1:Npml-1
                 k = Npml-i+1;
                 for j = 2:N_y-1
@@ -360,7 +246,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
             end
           
         
-            % PML (-y) Electric
+            % Update PML (-y) Electric
             for i = 2:N_x-1
                 for j = 2:Npml
                     k = j;
@@ -372,7 +258,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
             end
             
         
-            % PML (+y) Electric
+            % Update PML (+y) Electric
             for i = 2:N_x-1
                 for j = 2:Npml
                     k = Npml-j+1;
@@ -402,7 +288,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
             end
         
             
-            % PML (-x) Magnetic
+            % Update PML (-x) Magnetic
             for i = 2:Npml
                 for j = 2:N_y-1
                     Hx_pml_h(i, j, 1) = Dax_pml(i)*Hx_pml_h(i, j, 1) + Dbx_pml(i)*(Ezx_pml_h(i, j, 1) ...
@@ -417,7 +303,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                 end
             end
         
-            % PML (+x) Magnetic
+            % Update PML (+x) Magnetic
             for i = 1:Npml-1
                 k = Npml-i+1;
                 for j = 2:N_y-1
@@ -428,7 +314,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                 end
             end
         
-            % PML (-y) Magnetic
+            % Update PML (-y) Magnetic
             for i = 2:N_x-1
                 for j = 2:Npml
                     Hy_pml_v(i, j, 1) = Day_pml(j)*Hy_pml_v(i, j, 1) + Dby_pml(j)*(Ezx_pml_v(i+1, j, 1) ...
@@ -443,7 +329,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
                 end
             end
         
-            % PML (+y) Magnetic
+            % Update PML (+y) Magnetic
             for i = 2:N_x-1
                 for j = 1:Npml-1
                     k = Npml-j+1;
