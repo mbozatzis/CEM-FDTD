@@ -14,13 +14,13 @@ x_c = (Xm_nl/2-3)*n_lambda + n_lambda*cos(theta);
 y_c = (Ym_nl/2)*n_lambda + n_lambda*sin(theta);
 
 
-simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
-boundary = "Mur-second-order"; % Type of boundary condition
+simulation_options = [10, 10, 100, 100, 12, 10*10^9]; % [X0, Y0, Tn, f0]
+boundary = "PML"; % Type of boundary condition
 boundary_case = "full"; % Second order Mur at all boundaries 
 PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
 
 % Nearly perfect conductor
-cylinder_options = [3, 1, 3.4, 100, 0];
+cylinder_options = [-3, 1, 3.4, 100, 0];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
 
@@ -38,7 +38,7 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 % Dielectric cylinder
-cylinder_options = [3, 1, 3.4, 0, 0];
+cylinder_options = [-3, 1, 3.4, 0, 0];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
 
@@ -56,7 +56,7 @@ xlabel('X-axis');
 ylabel('Y-axis');
 
 % Scatterer at different place
-cylinder_options = [3, 1, 3.4, 1.2, 3];
+cylinder_options = [-3, 1, 3.4, 1.2, -3];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
 
@@ -79,7 +79,7 @@ colorbar;
 xlabel('X-axis');
 ylabel('Y-axis');
 
-cylinder_options = [3, 1, 3.4, 100, 3];
+cylinder_options = [-3, 1, 3.4, 100, -3];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
 
@@ -94,7 +94,7 @@ colorbar;
 xlabel('X-axis');
 ylabel('Y-axis');
 
-cylinder_options = [3, 1, 3.4, 0, 3];
+cylinder_options = [-3, 1, 3.4, 0, -3];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
 

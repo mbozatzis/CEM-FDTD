@@ -1,9 +1,9 @@
 clc
 clear
 
-cylinder_options = [3, 1, 1, 0, 0]; % [x0, R, e_r, sigma_r, y0]
-simulation_options = [10, 10, 10, 10*10^9]; % [X0, Y0, Tn, f0]
-boundary = "No-boundary"; % Type of boundary condition
+cylinder_options = [-3, 1, 5, 0, -3]; % [x0, R, e_r, sigma_r, y0]
+simulation_options = [10, 10, 100, 100, 10, 10*10^9]; % [X0, Y0, N_x, N_y Tn, f0]
+boundary = "PML"; % Type of boundary condition
 boundary_case = "full"; % boundaries only in the left side
 PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
 

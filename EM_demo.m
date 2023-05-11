@@ -1,17 +1,11 @@
 
 % To-dos
 % CEM: 
-%
-% - Better dispersion demo
-% - PML needs optimization -> read book
-% - Split CylinderSacttering method to functions
-% - Comment the code, make the CylinderScattering method more be
 % - report with theoretical calculations - show instability (make unstable
 % in purpose)
 %
 % Scattering:
 % - TF/SF Formulation implementation
-% - PML at the corners
 % - Analytical solution implementation
 % - Simulation with different cylinders at different positions and angles
 % - Show PML plot (inside PML) - PML options
@@ -34,8 +28,8 @@ x_c = (Xm_nl/2-3)*n_lambda + n_lambda*cos(theta);
 y_c = (Ym_nl/2)*n_lambda + n_lambda*sin(theta);
 
 % Part 1 - No boundaries
-cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
-simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
+cylinder_options = [-3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
+simulation_options = [10, 10, 100, 100, 12, 10*10^9]; % [X0, Y0, N_x, N_y, Tn, f0]
 boundary = "No-boundary"; % Type of boundary condition
 boundary_case = "full"; % Not in use in case of no-boundaries
 PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
@@ -100,8 +94,8 @@ ylabel('Y-axis');
 
 
 % Part 2 - Mur boundaries
-cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
-simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
+cylinder_options = [-3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
+simulation_options = [10, 10, 100, 100, 12, 10*10^9]; % [X0, Y0, Tn, f0]
 boundary = "Mur-first-order"; % Type of boundary condition
 boundary_case = "not-full"; % boundaries only in the left side
 PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
@@ -170,8 +164,8 @@ ylabel('Y-axis');
 
 
 % Part 3 - PML
-cylinder_options = [3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
-simulation_options = [10, 10, 12, 10*10^9]; % [X0, Y0, Tn, f0]
+cylinder_options = [-3, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
+simulation_options = [10, 10, 100, 100, 12, 10*10^9]; % [X0, Y0, Tn, f0]
 boundary = "PML"; % Type of boundary condition
 boundary_case = "not-full"; % boundaries only in the left side
 PML_options = [8, 2, 10^(-6)]; % [Npml, power, R]
@@ -219,49 +213,49 @@ figure(5);
 sgtitle('Electric Field at points of grid over time');
 
 subplot(4, 2, 1);
-plot(reshape(Ez_nb(x1, y1, :), [1, length(Ez_nb)]));
+plot(reshape(Ez_nb(y1, x1, :), [1, length(Ez_nb)]));
 title('Point x1 with no boundary conditions');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 2);
-plot(reshape(Ez_nb(x2, y2, :), [1, length(Ez_nb)]));
+plot(reshape(Ez_nb(y2, x2, :), [1, length(Ez_nb)]));
 title('Point x2 with no boundary conditions');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 3);
-plot(reshape(Ez_m1(x1, y1, :), [1, length(Ez_m1)]));
+plot(reshape(Ez_m1(y1, x1, :), [1, length(Ez_m1)]));
 title('Point x1 with first order Mur');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 4);
-plot(reshape(Ez_m1(x2, y2, :), [1, length(Ez_m1)]));
+plot(reshape(Ez_m1(y2, x2, :), [1, length(Ez_m1)]));
 title('Point x2 with first order Mur');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 5);
-plot(reshape(Ez_m2(x1, y1, :), [1, length(Ez_m2)]));
+plot(reshape(Ez_m2(y1, x1, :), [1, length(Ez_m2)]));
 title('Point x1 with second order Mur');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 6);
-plot(reshape(Ez_m2(x2, y2, :), [1, length(Ez_m2)]));
+plot(reshape(Ez_m2(y2, x2, :), [1, length(Ez_m2)]));
 title('Point x2 with second order Mur');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 7);
-plot(reshape(Ez_p(x1, y1, :), [1, length(Ez_p)]));
+plot(reshape(Ez_p(y1, x1, :), [1, length(Ez_p)]));
 title('Point x1 PML');
 ylabel('Ez field');
 xlabel('time');
 
 subplot(4, 2, 8);
-plot(reshape(Ez_p(x2, y2, :), [1, length(Ez_p)]));
+plot(reshape(Ez_p(y2, x2, :), [1, length(Ez_p)]));
 title('Point x2 with PML');
 ylabel('Ez field');
 xlabel('time');
