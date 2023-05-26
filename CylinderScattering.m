@@ -61,8 +61,8 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     n_lambda = lambda0/dx;
     [e, sigma] = createCylinder(e, sigma, e_r, sigma_r, x0_nl, y0_nl, R_nl, n_lambda);
 
-%     surf(e) % Visualize the space
-%     surf(sigma) % Visualize the space
+    %surf(e) % Visualize the space
+    %surf(sigma) % Visualize the space
  
     % Constants for field updating
     Ca = (2*e-dt*sigma)./(2*e+dt*sigma);

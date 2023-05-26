@@ -17,11 +17,11 @@ for ti = 0.2:0.2:1
     dt = ti*dx/c0;
     vp = (2./(k*dt)).*asin(c0.*dt.*sin(k*dx/2)./dx);
     plot(k*dx/(2*pi), vp*10^(-8));
-    Legend{it}=strcat('|c0*dt/dx| = ', num2str(ti));
+    Legend{it}=strcat('|c_0 Δt/Δx| = ', num2str(ti));
     it = it + 1;
 end
-ylabel("vp (x10^8 m/s)");
-xlabel("kdx (pi)")
+ylabel("υ_p (x10^8 m/s)");
+xlabel("kΔx (π)")
 legend(Legend);
 
 figure(2);
@@ -34,9 +34,9 @@ for dxi = 0.02:0.02:0.1
     dt = 0.9*dx/(c0*sqrt(2));
     vp = (2./(k*dt)).*asin(c0.*dt.*sqrt(sin(k.*cos(theta).*dx./2).^2+sin(k.*sin(theta).*dx./2).^2)./dx);
     plot(theta*180/pi, vp/c0);
-    Legend{it}=strcat('dx = ', num2str(dxi) ,'*lambda0');
+    Legend{it}=strcat('Δx = ', num2str(dxi) ,' λ_0');
     it = it + 1;
 end
-ylabel("vp/c");
-xlabel("theta (deg)")
+ylabel("υ_p/c_0");
+xlabel("θ (deg)")
 legend(Legend);
