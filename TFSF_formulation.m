@@ -1,7 +1,7 @@
 clc
 clear
 
-cylinder_options = [0, 1, 1, 0, 0]; % [x0, R, e_r, sigma_r, y0]
+cylinder_options = [0, 1, 3.4, 1.2, 0]; % [x0, R, e_r, sigma_r, y0]
 simulation_options = [10, 10, 100, 100, 10, 10*10^9]; % [X0, Y0, N_x, N_y Tn, f0]
 boundary = "PML"; % Type of boundary condition
 boundary_case = "full"; % boundaries only in the left side
@@ -28,10 +28,10 @@ Rpml = PML_options(3);
 N_x_new = N_x + 2*Npml;
 N_y_new = N_y + 2*Npml;
 
-Ntfsf = 10;
+Ntfsf = 8;
 tf_region_start = [Npml+Ntfsf, Npml+Ntfsf];   
 tf_region_end = [N_x+Npml-Ntfsf, N_x+Npml-Ntfsf]; 
-fi = pi/2;
+fi = pi/4;
 
 
 % Useful constants
@@ -68,7 +68,7 @@ else
 end
 
 aux_size = ceil(N_x*sqrt(2)+4);
-E_aux = zeros(aux_size, 1);
+E_aux = zeros(aux_size + 1, 1);
 H_aux = zeros(aux_size, 1);
 
 % Create the cylinder
@@ -135,16 +135,16 @@ Dbx_pml = (1-Dax_pml)./(sigmaHx.*dx);
 Dby_pml = (1-Day_pml)./(sigmaHy.*dx);
 
 l = 1;
-for t = 0:dt:Tmax*2            
+for t = 0:dt:Tmax*2          
     % Update Electric field
     Ez = updateEz(Ez, Hx, Hy, Ca, Cb, N_x, N_y, 1, Npml);
 
     % Ez Correction on the TFSF boundaries
     Ez(tf_region_start(1), tf_region_start(2):tf_region_end(2)) = ...
-        Ez(tf_region_start(1), tf_region_start(2):tf_region_end(2)) - ...
+        Ez(tf_region_start(1), tf_region_start(2):tf_region_end(2)) + ...
         dt/(e0*dy)*Hy_inc(tf_region_start(1), tf_region_start(2):tf_region_end(2));
     Ez(tf_region_end(1), tf_region_start(2):tf_region_end(2)) = ...
-        Ez(tf_region_end(1), tf_region_start(2):tf_region_end(2)) + ...
+        Ez(tf_region_end(1), tf_region_start(2):tf_region_end(2)) - ...
         dt/(e0*dy)*Hy_inc(tf_region_end(1), tf_region_start(2):tf_region_end(2));
 
     Ez(tf_region_start(1):tf_region_end(1), tf_region_start(2)) = ...
@@ -154,12 +154,15 @@ for t = 0:dt:Tmax*2
         Ez(tf_region_start(1):tf_region_end(1), tf_region_end(2)) - ...
         dt/(e0*dx)*Hx_inc(tf_region_start(1):tf_region_end(1), tf_region_end(2));
 
+    E_aux_prev_max = E_aux(aux_size);
     for i = 2:aux_size
         E_aux(i) = E_aux(i) + dt/(0.98*e0*dx)*(H_aux(i-1) - H_aux(i));
     end
+
+    % Auxilary field boundary (Mur 1st)
+    E_aux(aux_size+1) = E_aux_prev_max - (dx-0.98*c0*dt)/(dx+0.98*c0*dt)*(E_aux(aux_size) - E_aux(aux_size+1));
     
     % Update source
-%     Ez(floor(N_x_new/2), floor(N_y_new/2)) = sin(2*pi*f0*t);
     for i = tf_region_start(1):tf_region_end(1)
         d1 = (i - tf_region_start(1))*cos(fi);
         d2 = (i - tf_region_start(1))*cos(fi) + (tf_region_end(2) - tf_region_start(2))*sin(fi);
@@ -186,22 +189,20 @@ for t = 0:dt:Tmax*2
     % Update PML (-x) Electric
     [Ezx_pml, Ezy_pml] = updatePMLxnE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);   
     
-    if boundary_case == "full"
-        % Update PML (+x) Electric
-        [Ezx_pml, Ezy_pml] = updatePMLxpE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
-        
-        % Update PML (-y) Electric 
-        [Ezx_pml, Ezy_pml] = updatePMLynE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
-        
-        % Update PML (+y) Electric
-        [Ezx_pml, Ezy_pml] = updatePMLypE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
-    end
+    % Update PML (+x) Electric
+    [Ezx_pml, Ezy_pml] = updatePMLxpE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
+    
+    % Update PML (-y) Electric 
+    [Ezx_pml, Ezy_pml] = updatePMLynE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
+    
+    % Update PML (+y) Electric
+    [Ezx_pml, Ezy_pml] = updatePMLypE(Ezx_pml, Ezy_pml, Hx, Hy, Ca_pml, Cb_pml, Npml, N_x, N_y);
     
     % Update Magnetic Field
     Hx = updateHx(Hx, Ez, Da, N_x, N_y, 1, Npml);
     Hy = updateHy(Hy, Ez, Db, N_x, N_y, 1, Npml);
 
-    for i = 1:aux_size-1
+    for i = 1:aux_size
         H_aux(i) = H_aux(i) + dt/(0.98*m0*dx)*(E_aux(i) - E_aux(i+1));
     end
     
@@ -221,8 +222,8 @@ for t = 0:dt:Tmax*2
         dt/(m0*dy)*Ez_inc(tf_region_end(1), tf_region_start(2):tf_region_end(2));
 
     for i = tf_region_start(1):tf_region_end(1)
-        d1 = (i - tf_region_start(1))*cos(fi) + 1/2;
-        d2 = (i - tf_region_start(1))*cos(fi) + (tf_region_end(2) - tf_region_start(2))*sin(fi) + 1/2;
+        d1 = (i - tf_region_start(1))*cos(fi);
+        d2 = (i - tf_region_start(1))*cos(fi) + (tf_region_end(2) - tf_region_start(2))*sin(fi);
         d1t = d1 - ceil(d1);
         d2t = d2 - ceil(d2);
 
@@ -231,8 +232,8 @@ for t = 0:dt:Tmax*2
     end
 
     for j = tf_region_start(2):tf_region_end(2)
-        d1 = (j - tf_region_start(2))*sin(fi) + 1/2;
-        d2 = (tf_region_end(1) - tf_region_start(1))*cos(fi) + (j - tf_region_start(2))*sin(fi) + 1/2;
+        d1 = (j - tf_region_start(2))*sin(fi);
+        d2 = (tf_region_end(1) - tf_region_start(1))*cos(fi) + (j - tf_region_start(2))*sin(fi);
         d1t = d1 - ceil(d1);
         d2t = d2 - ceil(d2);
 
@@ -241,8 +242,8 @@ for t = 0:dt:Tmax*2
     end
 
     for i = tf_region_start(1):tf_region_end(1)
-        d1 = (i - tf_region_start(1))*cos(fi) + 1/2;
-        d2 = (i - tf_region_start(1))*cos(fi) + (tf_region_end(2) - tf_region_start(2))*sin(fi) + 1/2;
+        d1 = (i - tf_region_start(1))*cos(fi);
+        d2 = (i - tf_region_start(1))*cos(fi) + (tf_region_end(2) - tf_region_start(2))*sin(fi);
         d1t = d1 - ceil(d1);
         d2t = d2 - ceil(d2);
 
@@ -251,8 +252,8 @@ for t = 0:dt:Tmax*2
     end
 
     for j = tf_region_start(2):tf_region_end(2)
-        d1 = (j - tf_region_start(2))*sin(fi) + 1/2;
-        d2 = (tf_region_end(1) - tf_region_start(1))*cos(fi) + (j - tf_region_start(2))*sin(fi) + 1/2;
+        d1 = (j - tf_region_start(2))*sin(fi);
+        d2 = (tf_region_end(1) - tf_region_start(1))*cos(fi) + (j - tf_region_start(2))*sin(fi);
         d1t = d1 - ceil(d1);
         d2t = d2 - ceil(d2);
 
@@ -265,19 +266,17 @@ for t = 0:dt:Tmax*2
     [Hx, Hy] = updatePMLxnH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
         Dby_pml, Npml, N_x, N_y);
     
-    if boundary_case == "full"
-        % Update PML (+x) Magnetic
-        [Hx, Hy] = updatePMLxpH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
-            Dby_pml, Npml, N_x, N_y);
-        
-        % Update PML (-y) Magnetic
-        [Hx, Hy] = updatePMLynH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
-            Dby_pml, Npml, N_x, N_y);
-        
-        % Update PML (+y) Magnetic
-        [Hx, Hy] = updatePMLypH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
-            Dby_pml, Npml, N_x, N_y);
-    end
+    % Update PML (+x) Magnetic
+    [Hx, Hy] = updatePMLxpH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
+        Dby_pml, Npml, N_x, N_y);
+    
+    % Update PML (-y) Magnetic
+    [Hx, Hy] = updatePMLynH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
+        Dby_pml, Npml, N_x, N_y);
+    
+    % Update PML (+y) Magnetic
+    [Hx, Hy] = updatePMLypH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
+        Dby_pml, Npml, N_x, N_y);
     
     eez(:, :, l) = Ez(Npml+1:Npml+N_y+1,Npml+1:Npml+N_y+1);
     hhx(:, :, l) = Hx;

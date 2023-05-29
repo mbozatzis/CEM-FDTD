@@ -66,7 +66,7 @@ plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
-title('Ez field at time: t1 = 7T0');
+title('Ez field at time: t2 = 7T0');
 xlabel('X-axis');
 ylabel('Y-axis');
 
@@ -77,7 +77,7 @@ plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
-title('Ez field at time: t2 = 10T0');
+title('Ez field at time: t3 = 10T0');
 xlabel('X-axis');
 ylabel('Y-axis');
 
@@ -88,7 +88,7 @@ plot(x_c, y_c, 'r', 'LineWidth', 1);
 shading interp;
 colormap default;
 colorbar;
-title('Ez field at time: t3 = 12T0');
+title('Ez field at time: t4 = 12T0');
 xlabel('X-axis');
 ylabel('Y-axis');
 
