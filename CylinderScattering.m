@@ -61,8 +61,6 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     n_lambda = lambda0/dx;
     [e, sigma] = createCylinder(e, sigma, e_r, sigma_r, x0_nl, y0_nl, R_nl, n_lambda);
 
-    %surf(e) % Visualize the space
-    %surf(sigma) % Visualize the space
  
     % Constants for field updating
     Ca = (2*e-dt*sigma)./(2*e+dt*sigma);
@@ -73,7 +71,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
 
     % PML Parameters    
     se = - (pow+1)*e0*c0*log(Rpml)/(2*dx*Npml);
-    sh=(m0/e0)*se;
+    sh = (m0/e0)*se;
     sigmaE = zeros(N_x_new, N_y_new);
     sigmaHx = zeros(N_x_new, N_y_new);
     sigmaHy = zeros(N_x_new, N_y_new);
@@ -105,6 +103,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
         sigmaHx(:, Npml+N_y+j)= sigmaHx(:, Npml+N_y+j) + sh*(j/Npml)^(pow);
         sigmaHy(:, Npml+N_y+j)= sigmaHy(:, Npml+N_y+j) + sh*((j+0.5)/Npml)^(pow);
     end 
+
     
     Ca_pml = exp(1).^(-sigmaE.*dt/e0);
     Cb_pml = (1-Ca_pml)./(sigmaE.*dx);

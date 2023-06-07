@@ -11,7 +11,7 @@ function Ez_next = updateEzMurSecond(Ez, Ez_prev, Hx, Hy, Ca, Cb, N_x, N_y, dx, 
             Ez_next(i, j) = Ca(i, j)*Ez(i, j) + Cb(i, j)*(Hy(i, j)-Hy(i-1, j) ...
                 + Hx(i,j-1) - Hx(i, j));
 
-           % (+/- x) Mur second order boundaries
+           % (xp, xn) Mur second order boundaries
             Ez_next(1, j) = -Ez_prev(1, j) - A*(Ez_next(2, j) + Ez_prev(2, j))...
                 + B*(Ez(1, j) + Ez(2, j)) + C*(Ez(1, j+1) - 2*Ez(1, j) + ...
                 Ez(1, j-1) + Ez(2, j+1) - 2*Ez(2, j) + Ez(2, j-1));
@@ -24,7 +24,7 @@ function Ez_next = updateEzMurSecond(Ez, Ez_prev, Hx, Hy, Ca, Cb, N_x, N_y, dx, 
             end
         end
 
-        % (+/- y) Mur second order boundaries
+        % (yp, yn) Mur second order boundaries
         if boundary_case == "full"
             Ez_next(i, 1) = -Ez_prev(i, 1)-A*(Ez_next(i, 2) + Ez_prev(i, 2)) ...
                 + B*(Ez(i,1)+Ez(i, 2)) + C*(Ez(i+1,1)-2*Ez(i,1) + Ez(i-1,1) ...

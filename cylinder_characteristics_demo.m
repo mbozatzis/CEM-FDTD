@@ -1,3 +1,5 @@
+addpath("PML/");
+
 clc
 clear
 
@@ -19,7 +21,7 @@ boundary = "PML"; % Type of boundary condition
 boundary_case = "full"; % Second order Mur at all boundaries 
 PML_options = [8, 2, 10^(-6)]; % Only in use when boundary is PML
 
-% Nearly perfect conductor
+% Conducting Cylinder
 cylinder_options = [-3, 1, 3.4, 100, 0];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
@@ -30,14 +32,14 @@ figure(1);
 pcolor(Ez(:, :, i_max)');
 hold on;
 plot(x_c, y_c, 'r', 'LineWidth', 1);
-title('Perfectly conducting scatterer');
+title('Conducting scatterer');
 shading interp;
 colormap default;
 colorbar;
 xlabel('X-axis');
 ylabel('Y-axis');
 
-% Dielectric cylinder
+% Dielectric Cylinder
 cylinder_options = [-3, 1, 3.4, 0, 0];
 [Ez, Hx, Hy] = CylinderScattering(cylinder_options, simulation_options, ...
     boundary, boundary_case, PML_options);
@@ -87,7 +89,7 @@ subplot(2, 2, 2);
 pcolor(Ez(:, :, i_max)');
 hold on;
 plot(x_c, y_c, 'r', 'LineWidth', 1);
-title('Perfectly conducting scatterer');
+title('Conducting scatterer');
 shading interp;
 colormap default;
 colorbar;

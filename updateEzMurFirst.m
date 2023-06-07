@@ -10,14 +10,14 @@ function Ez_next = updateEzMurFirst(Ez, Hx, Hy, Ca, Cb, N_x, N_y, dx, dt, c0, bo
             end
         end
 
-        % (+/- y) Mur first order boundaries 
+        % (yp, yn) Mur first order boundaries 
         if boundary_case == "full"
             Ez_next(i, 1) = Ez(i, 2) + Cm1*(Ez_next(i, 2) - Ez_next(i, 1));
             Ez_next(i, N_y+1) = Ez(i, N_y) + Cm1*(Ez_next(i, N_y) - Ez_next(i, N_y+1));
         end
     end
 
-    % (+/- x) Mur first order boundaries 
+    % (xp, xn) Mur first order boundaries 
     for j = 1:N_y+1
         Ez_next(1, j) = Ez(2, j) + Cm1*(Ez_next(2, j) - Ez_next(1, j));
         if boundary_case == "full"
@@ -26,10 +26,10 @@ function Ez_next = updateEzMurFirst(Ez, Hx, Hy, Ca, Cb, N_x, N_y, dx, dt, c0, bo
     end
 
     % Mur first order boundaries at corners
-    if boundary_case == "full"
-        Ez_next(1, N_y+1) = Ez(2, N_y) + Cm1*(Ez_next(2, N_y+1) - Ez_next(1, N_y+1));
-        Ez_next(N_x+1, 1) = Ez(N_x, 2) + Cm1*(Ez_next(N_x, 1) - Ez_next(N_x+1, 1));
-        Ez_next(1, 1) = Ez(2, 2) + Cm1*(Ez_next(1, 2) - Ez_next(1, 1));
-        Ez_next(N_x+1, N_y+1) = Ez(N_x, N_y) + Cm1*(Ez_next(N_x+1, N_y) - Ez_next(N_x+1, N_y+1));
-    end
+%     if boundary_case == "full"
+%         Ez_next(1, N_y+1) = Ez(2, N_y) + Cm1*(Ez_next(2, N_y+1) - Ez_next(1, N_y+1));
+%         Ez_next(N_x+1, 1) = Ez(N_x, 2) + Cm1*(Ez_next(N_x, 1) - Ez_next(N_x+1, 1));
+%         Ez_next(1, 1) = Ez(2, 2) + Cm1*(Ez_next(1, 2) - Ez_next(1, 1));
+%         Ez_next(N_x+1, N_y+1) = Ez(N_x, N_y) + Cm1*(Ez_next(N_x+1, N_y) - Ez_next(N_x+1, N_y+1));
+%     end
 end

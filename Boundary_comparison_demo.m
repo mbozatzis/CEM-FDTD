@@ -1,3 +1,5 @@
+addpath("PML/");
+
 clc
 clear
 
@@ -82,23 +84,34 @@ Et_p = reshape(Ez_p(test_point(1), test_point(2), :), [1, length(Ez_p)]);
 Et_ref = reshape(Ez_ref(ref_test_point(1), ref_test_point(2), :), [1, size(Ez_ref, 3)]);
 
 % Plot the errors of the boundary over time
+t = linspace(0, 10, size(Ez_ref, 3));
 ref = max(Et_ref);
 figure(2);
-sgtitle("Relative errors for a point in the middle of the bottom boundary");
+sgtitle("Relative errors for different boundaries");
 subplot(2, 2, 1);
-plot(abs(Et_ref - Et_nb)/ref);
+plot(t, abs(Et_ref - Et_nb)/ref);
+xlabel("Time (T_0)")
+ylabel("(E_z - E_{ref})/E_{ref}")
 title("No-boundary error");
 
 subplot(2, 2, 2);
-plot(abs(Et_ref - Et_m1)/ref);
+plot(t, abs(Et_ref - Et_m1)/ref);
+xlabel("Time (T_0)")
+ylabel("(E_z - E_{ref})/E_{ref}")
 title("Mur first order error");
 
 subplot(2, 2, 3);
-plot(abs(Et_ref - Et_m2)/ref);
+plot(t, abs(Et_ref - Et_m2)/ref);
+xlabel("Time (T_0)")
+ylabel("(E_z - E_{ref})/E_{ref}")
 title("Mur second order error");
 
 subplot(2, 2, 4);
-plot(abs(Et_ref - Et_p)/ref);
+plot(t, abs(Et_ref - Et_p)/ref);
+xlabel("Time (T_0)")
+ylabel("(E_z - E_{ref})/E_{ref}")
 title("PML error");
+
+
 
 
