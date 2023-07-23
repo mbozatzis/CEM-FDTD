@@ -111,6 +111,7 @@ function [eez, hhx, hhy] = CylinderScattering(cylinder_options, simulation_optio
     Day_pml = exp(1).^( -sigmaHy.*dt./m0);
     Dbx_pml = (1-Dax_pml)./(sigmaHx.*dx);
     Dby_pml = (1-Day_pml)./(sigmaHy.*dx);
+    
 
     l = 1;
     if boundary == "No-boundary"
