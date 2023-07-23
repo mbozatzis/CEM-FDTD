@@ -189,6 +189,7 @@ function [eez, hhx, hhy] = TFSF_formulation(cylinder_options, simulation_options
         % Update PML (+y) Magnetic
         [Hx, Hy] = updatePMLypH(Hx, Hy, Ez, Ezx_pml, Ezy_pml, Dax_pml, Dbx_pml, Day_pml, ...
             Dby_pml, Npml, N_x, N_y);
+
         
         eez(:, :, l) = Ez(Npml+1:Npml+N_y+1,Npml+1:Npml+N_y+1);
         hhx(:, :, l) = Hx;
