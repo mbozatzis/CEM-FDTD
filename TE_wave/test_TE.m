@@ -6,8 +6,8 @@ Xm_nl = 10;
 Ym_nl = 10;
 N_x = 100;
 N_y = 100;
-Tn = 12;
-f0 = 2*10^9;
+Tn = 10;
+f0 = 2*10^12;
 
 % Useful constants
 e0=8.85418781762e-12;
@@ -33,19 +33,35 @@ N_y_new = N_y + 2*Npml;
 Ntfsf = 8;
 tf_region_start = [Npml+Ntfsf, 1];   
 tf_region_end = [N_x+Npml-Ntfsf, N_x_new]; 
-fi = 0;
+fi = pi;
 
 e = e0*ones(N_x_new+1, N_y_new+1);
 sigma = zeros(N_x_new+1, N_y_new+1);
+e1 = e0;
+e2 = 2*e0;
+for i = 1:N_x_new+1
+    for j = 1:N_y_new+1
+        if i>= 58
+            e(i, j) = 2*e(i, j);
+        end
+    end
+end
+
+% Graphene
+A_gr = 0.02344;
+tau_gr = 6.648e-13;
 
 Ca = (2*e-dt*sigma)./(2*e+dt*sigma);
 Cb = (2*dt./(2*e + dt * sigma))*(1/dx);
 Da = dt/(m0*dy);
 Db = dt/(m0*dx);
 
+Cb_gr = 2*dt/((e1 + e2)*dx);
+
 Hz = zeros(N_x_new+1, N_y_new+1);
 Ex = zeros(N_x_new, N_y_new+1);
 Ey = zeros(N_x_new+1, N_y_new);
+Jy = zeros(N_x_new+1, N_y_new);
 
 Hzx_pml = zeros(N_x_new+1, N_y_new+1);
 Hzy_pml = zeros(N_x_new+1, N_y_new+1);
@@ -108,7 +124,9 @@ for t = 0:dt:Tmax
 
     % Update Electric Field
     Ex = updateEx(Ex, Hz, Ca, Cb, N_x, N_y, Npml);
-    Ey = updateEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml);
+    Ey = updateEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml, 1, 58, Cb_gr, Jy);
+
+    Jy = (2*tau_gr-dt)/(2*tau_gr+dt)*Jy + 2*A_gr*dt/(2*tau_gr+dt)*Ey;
 
     % TFSF Electric (-x)
     Ey(tf_region_start(1), tf_region_start(2):tf_region_end(2)) = ...
