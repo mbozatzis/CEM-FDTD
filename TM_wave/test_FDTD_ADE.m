@@ -1,8 +1,8 @@
 clc
 clear
 
-addpath("PML/");
-addpath("TFSF/");
+addpath("TM_wave/PML/");
+addpath("TM_wave/TFSF/");
     
 % Extract options
 x0_nl = 0;

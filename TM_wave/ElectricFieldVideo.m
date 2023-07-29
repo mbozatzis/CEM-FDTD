@@ -1,5 +1,5 @@
-addpath("TFSF/");
-addpath("PML/");
+addpath("TM_wave/TFSF/");
+addpath("TM_wave/PML/");
 
 clc
 clear
