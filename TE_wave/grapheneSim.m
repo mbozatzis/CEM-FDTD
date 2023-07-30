@@ -8,7 +8,7 @@ Xm_nl = 10;
 Ym_nl = 10;
 N_x = 100;
 N_y = 100;
-Tn = 7;
+Tn = 10;
 f0 = 0.5*10^12;
 
 % Useful constants
@@ -135,8 +135,8 @@ Db_pml = (1-Da_pml)./(sigmaHz.*dx);
 for t = 0:dt:Tmax
 
     % Update Electric Field
-    Ex = updateEx(Ex, Hz, Ca, Cb, N_x, N_y, Npml, 0);
-    Ey = updateGrapheneEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml, pos_gr, Cb_gr, Jy);
+    Ex = updateEx(Ex, Hz, Ca, Cb, N_x, N_y, Npml, 1);
+    Ey = updateGrapheneEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml, pos_gr, Cb_gr, Jy, 1);
 
     % Update Graphene ADE
     Jy = updateGrapheneADE(Jy, Ey, tau_gr, A_gr, dt);
@@ -152,22 +152,17 @@ for t = 0:dt:Tmax
     [Ex, Ey] = updatePMLxpE(Ex, Ey, Hzx_pml, Hzy_pml, Hz, Cax_pml, ...
     Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
-    % PBC Electric
-    for i = 1:N_x_new
-        Ex(i, N_x_new) = Ex(i, N_x_new) + Cb(i, j)*(Hz(i, 1)-Hz(i, N_x_new));
-        % Ex(i, Npml) = Ex(i, Npml) + Cb(i, Npml)*(Hz(i, Npml+1)-Hz(i, Npml));
-        % Ex(i, Npml+N_x+1) = Ex(i, Npml);
-        % 
-        % Ey(i, Npml) = Ey(i, Npml) + Cb(i, Npml)*(Hz(i, Npml)-Hz(i+1, Npml));
-        % Ey(i, Npml+N_x+1) = Ey(i, Npml);
+    % PML Electric (-y)
+    [Ex, Ey] = updatePMLynE(Ex, Ey, Hzx_pml, Hzy_pml, Cax_pml, ...
+    Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
-        Ex(i, 1) = Ex(i, N_x_new)*exp(1i*k0*N_y_new);
-        Ey(i, 1) = Ey(i, N_x_new)*exp(1i*k0*N_y_new);
-    end
+    % PML Electric (+y)
+    [Ex, Ey] = updatePMLypE(Ex, Ey, Hzx_pml, Hzy_pml, Hz, Cax_pml, ...
+    Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
 
     % Update Magnetic Field
-    Hz = updateHz(Hz, Ex, Ey, Da, Db, N_x, N_y, Npml, 0);
+    Hz = updateHz(Hz, Ex, Ey, Da, Db, N_x, N_y, Npml, 1);
 
     % PML Magnetic (-x)
     [Hzx_pml, Hzy_pml, Hz] = updatePMLxnH(Hzx_pml, Hzy_pml, ...
@@ -177,16 +172,16 @@ for t = 0:dt:Tmax
     [Hzx_pml, Hzy_pml, Hz] = updatePMLxpH(Hzx_pml, Hzy_pml, ...
     Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
-    % PBC Magnetic
-    for i = 2:N_x_new
-        Hz(i, 1) = Hz(i, 1) + Db*(Ex(i, 1)-Ex(i, N_y_new) ...
-            + Ey(i-1,1) - Ey(i, 1));
+    % PML Magnetic (-y)
+    [Hzx_pml, Hzy_pml, Hz] = updatePMLynH(Hzx_pml, Hzy_pml, ...
+    Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
-        Hz(i, N_y_new) = Hz(i, 1)*exp(-1i*k0*N_y_new);
-    end
+    % PML Magnetic (+y)
+    [Hzx_pml, Hzy_pml, Hz] = updatePMLypH(Hzx_pml, Hzy_pml, ...
+    Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
 
-    pcolor(real(Hz(Npml+1:Npml+N_y+1,1:2*Npml+N_y)));
+    pcolor(real(Ex(Npml+1:Npml+N_y+1,1:2*Npml+N_y)));
     shading interp;
     drawnow;
 
