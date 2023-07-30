@@ -7,16 +7,16 @@ function [Ex_inc, Ey_inc] = IncFromAuxE(E_aux, Ex_inc_prev, Ey_inc_prev, fi, ...
     % Calculate r components for each angle
     if (fi >= 0) && (fi <= pi/2)
         base_i = tf_region_start(1);
-        base_j = tf_region_start(2);
+        base_j = tf_region_start(2)-1;
     elseif (fi > pi/2) && (fi <= pi)
-        base_i = tf_region_end(1);
-        base_j = tf_region_start(2);
+        base_i = tf_region_end(1)-1/2;
+        base_j = tf_region_start(2)-1;
     elseif (fi > pi) && (fi <= 3*pi/2)
         base_i = tf_region_end(1);
         base_j = tf_region_end(2);
     elseif (fi > 3*pi/2) && (fi <= 2*pi)
-        base_i = tf_region_start(1);
-        base_j = tf_region_end(2);
+        base_i = tf_region_start(1)-1;
+        base_j = tf_region_end(2)-1/2;
     end
 
     % Calculate incident field Ex from Auxilary field E - xn, xp

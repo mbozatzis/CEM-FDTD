@@ -76,7 +76,7 @@ title("Plane Wave 90°")
 tp = [50, 50];
 t = linspace(0, 8, size(eez_0, 3));
 
-figure(2);
+figure(3);
 subplot(2, 2, 1);
 plot(t, reshape(eez_0(tp(1), tp(2), :), [1, size(eez_0, 3)]));
 title("Plane Wave 0°")

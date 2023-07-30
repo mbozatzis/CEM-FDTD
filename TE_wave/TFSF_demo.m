@@ -2,14 +2,15 @@ clc
 clear
 
 addpath("TE_wave/PML/");
+addpath("TE_wave/TFSF/");
 
 % Define options
 Xm_nl = 10;
 Ym_nl = 10;
 N_x = 100;
 N_y = 100;
-Tn = 7;
-f0 = 0.5*10^12;
+Tn = 15;
+f0 = 5*10^9;
 
 % Useful constants
 e0=8.85418781762e-12;
@@ -36,30 +37,14 @@ N_y_new = N_y + 2*Npml;
 
 % TFSF Characteristics
 Ntfsf = 8;
-tf_region_start = [Npml+Ntfsf, 1];   
-tf_region_end = [N_x+Npml-Ntfsf, N_x_new]; 
-fi = pi;
+tf_region_start = [Npml+Ntfsf, Npml+Ntfsf];   
+tf_region_end = [N_x+Npml-Ntfsf, N_y+Npml-Ntfsf]; 
+fi = pi/4;
 
 % Medium Characteristics
 e = e0*ones(N_x_new+1, N_y_new+1);
 sigma = zeros(N_x_new+1, N_y_new+1);
-e1 = e0;
-e2 = e0;
 
-% e1 = e0;
-% e2 = e0;
-% for i = 1:N_x_new+1
-%     for j = 1:N_y_new+1
-%         if i>= 58
-%             e(i, j) = e(i, j);
-%         end
-%     end
-% end
-
-% Graphene Characteristics
-A_gr = 0.1166; %0.02344;
-tau_gr = 3.3151e-12; %6.648e-13;
-pos_gr = Npml + N_x/2; 
 
 
 % Field updating parameters
@@ -67,13 +52,11 @@ Ca = (2*e-dt*sigma)./(2*e+dt*sigma);
 Cb = (2*dt./(2*e + dt * sigma))*(1/dx);
 Da = dt/(m0*dy);
 Db = dt/(m0*dx);
-Cb_gr = 2*dt/((e1 + e2)*dx);
 
 % Initialize fields
 Hz = zeros(N_x_new+1, N_y_new+1);
 Ex = zeros(N_x_new, N_y_new+1);
 Ey = zeros(N_x_new+1, N_y_new);
-Jy = zeros(N_x_new+1, N_y_new);
 
 Hzx_pml = zeros(N_x_new+1, N_y_new+1);
 Hzy_pml = zeros(N_x_new+1, N_y_new+1);
@@ -135,60 +118,81 @@ Db_pml = (1-Da_pml)./(sigmaHz.*dx);
 for t = 0:dt:Tmax
 
     % Update Electric Field
-    Ex = updateEx(Ex, Hz, Ca, Cb, N_x, N_y, Npml, 0);
-    Ey = updateGrapheneEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml, pos_gr, Cb_gr, Jy);
+    Ex = updateEx(Ex, Hz, Ca, Cb, N_x, N_y, Npml, 1);
+    Ey = updateEy(Ey, Hz, Ca, Cb, N_x, N_y, Npml, 1);
 
-    % Update Graphene ADE
-    Jy = updateGrapheneADE(Jy, Ey, tau_gr, A_gr, dt);
+    % Ez Correction on the TFSF boundaries
+    [Ex, Ey] = updateTFSFboundE(Ex, Ey, Hz_inc, tf_region_start, tf_region_end, dx, dy, dt);
+
+    % Update Auxilary field E
+    E_aux_prev_max = E_aux(aux_size);
+    for i = 2:aux_size
+        E_aux(i) = E_aux(i) + dt/(e0*dx)*(H_aux(i-1) - H_aux(i));
+    end
+
+    % Auxilary field boundary (Mur 1st)
+    E_aux(aux_size+1) = E_aux_prev_max - (dx-c0*dt)/(dx+c0*dt) ...
+        *(E_aux(aux_size) - E_aux(aux_size+1));
+
+    % Calculate incident field Ez from Auxilary field E
+    [Ex_inc, Ey_inc] = IncFromAuxE(E_aux, Ex_inc, Ey_inc, fi, tf_region_start, ...
+        tf_region_end);
     
-    % Update source
-    Ey(floor(N_x_new/2+1), floor(N_y_new/2)) = sin(2*pi*f0*t);
 
     % PML Electric (-x)
     [Ex, Ey] = updatePMLxnE(Ex, Ey, Hzx_pml, Hzy_pml, Cax_pml, ...
     Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
-    %PML Electric (+x)
+    % PML Electric (+x)
     [Ex, Ey] = updatePMLxpE(Ex, Ey, Hzx_pml, Hzy_pml, Hz, Cax_pml, ...
     Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
-    % PBC Electric
-    for i = 1:N_x_new
-        Ex(i, N_x_new) = Ex(i, N_x_new) + Cb(i, j)*(Hz(i, 1)-Hz(i, N_x_new));
-        % Ex(i, Npml) = Ex(i, Npml) + Cb(i, Npml)*(Hz(i, Npml+1)-Hz(i, Npml));
-        % Ex(i, Npml+N_x+1) = Ex(i, Npml);
-        % 
-        % Ey(i, Npml) = Ey(i, Npml) + Cb(i, Npml)*(Hz(i, Npml)-Hz(i+1, Npml));
-        % Ey(i, Npml+N_x+1) = Ey(i, Npml);
+    % PML Electric (-y)
+    [Ex, Ey] = updatePMLynE(Ex, Ey, Hzx_pml, Hzy_pml, Cax_pml, ...
+    Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
-        Ex(i, 1) = Ex(i, N_x_new)*exp(1i*k0*N_y_new);
-        Ey(i, 1) = Ey(i, N_x_new)*exp(1i*k0*N_y_new);
-    end
+    % PML Electric (+y)
+    [Ex, Ey] = updatePMLypE(Ex, Ey, Hzx_pml, Hzy_pml, Hz, Cax_pml, ...
+    Cay_pml, Cbx_pml, Cby_pml, Npml, N_x, N_y);
 
 
     % Update Magnetic Field
-    Hz = updateHz(Hz, Ex, Ey, Da, Db, N_x, N_y, Npml, 0);
+    Hz = updateHz(Hz, Ex, Ey, Da, Db, N_x, N_y, Npml, 1);
+
+    % Update Auxilary field H
+    for i = 1:aux_size
+        H_aux(i) = H_aux(i) + dt/(m0*dx)*(E_aux(i) - E_aux(i+1));
+    end
+
+    % Update source on the Auxilary Field
+    H_aux(1) = sin(2*pi*f0*t);
+
+    % H Correction on the TFSF boundaries
+    Hz = updateTFSFboundH(Hz, Ex_inc, Ey_inc, tf_region_start, ...
+        tf_region_end, dx, dy, dt);
+
+    % Calculate incident field Hx and Hy from Auxilary field H
+    Hz_inc = IncFromAuxH(H_aux, Hz_inc, fi, tf_region_start, tf_region_end);
 
     % PML Magnetic (-x)
     [Hzx_pml, Hzy_pml, Hz] = updatePMLxnH(Hzx_pml, Hzy_pml, ...
     Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
-    %PML Magnetic (+x)
+    % PML Magnetic (+x)
     [Hzx_pml, Hzy_pml, Hz] = updatePMLxpH(Hzx_pml, Hzy_pml, ...
     Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
-    % PBC Magnetic
-    for i = 2:N_x_new
-        Hz(i, 1) = Hz(i, 1) + Db*(Ex(i, 1)-Ex(i, N_y_new) ...
-            + Ey(i-1,1) - Ey(i, 1));
+    % PML Magnetic (-y)
+    [Hzx_pml, Hzy_pml, Hz] = updatePMLynH(Hzx_pml, Hzy_pml, ...
+    Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
-        Hz(i, N_y_new) = Hz(i, 1)*exp(-1i*k0*N_y_new);
-    end
+    % PML Magnetic (+y)
+    [Hzx_pml, Hzy_pml, Hz] = updatePMLypH(Hzx_pml, Hzy_pml, ...
+    Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
 
-    pcolor(real(Hz(Npml+1:Npml+N_y+1,1:2*Npml+N_y)));
+    pcolor(real(Hz(Npml+1:Npml+N_y+1, Npml+1:Npml+N_y+1)));
     shading interp;
     drawnow;
 
 end
-

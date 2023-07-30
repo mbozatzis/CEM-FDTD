@@ -3,7 +3,7 @@ function [Ex, Ey] = updateTFSFboundE(Ex_prev, Ey_prev, Hz_inc, tf_region_start, 
 
     Ex = Ex_prev;
     Ey = Ey_prev;
-    e0 = 8.85418781762e-12;
+    e0=8.85418781762e-12;
 
     % Update Ey TFSF boundaries at xn
     Ey(tf_region_start(1), tf_region_start(2):tf_region_end(2)) = ...
@@ -16,8 +16,13 @@ function [Ex, Ey] = updateTFSFboundE(Ex_prev, Ey_prev, Hz_inc, tf_region_start, 
             dt/(e0*dy)*Hz_inc(tf_region_end(1), tf_region_start(2):tf_region_end(2));
 
     % Update Ex TFSF boundaries at yn
+    Ex(tf_region_start(1):tf_region_end(1), tf_region_start(2)) = ...
+        Ex(tf_region_start(1):tf_region_end(1), tf_region_start(2)) - ...
+        dt/(e0*dx)*Hz_inc(tf_region_start(1):tf_region_end(1), tf_region_start(2));
 
     % Update Ex TFSF boundaries at yp
-
+    Ex(tf_region_start(1):tf_region_end(1), tf_region_end(2)) = ...
+        Ex(tf_region_start(1):tf_region_end(1), tf_region_end(2)) + ...
+        dt/(e0*dx)*Hz_inc(tf_region_start(1):tf_region_end(1), tf_region_end(2));
 
 end

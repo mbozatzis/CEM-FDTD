@@ -7,14 +7,14 @@ function Hz_inc = IncFromAuxH(H_aux, Hz_inc_prev, fi, tf_region_start, tf_region
         base_i = tf_region_start(1);
         base_j = tf_region_start(2);
     elseif (fi > pi/2) && (fi <= pi)
-        base_i = tf_region_end(1)-1/2;
+        base_i = tf_region_end(1);
         base_j = tf_region_start(2);
     elseif (fi > pi) && (fi <= 3*pi/2)
-        base_i = tf_region_end(1)-1/2;
-        base_j = tf_region_end(2)-1/2;
+        base_i = tf_region_end(1);
+        base_j = tf_region_end(2);
     elseif (fi > 3*pi/2) && (fi <= 2*pi)
         base_i = tf_region_start(1);
-        base_j = tf_region_end(2)-1/2;
+        base_j = tf_region_end(2);
     end
 
     % Calculate incident field Hz from Auxilary field H - xn, xp
