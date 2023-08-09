@@ -8,7 +8,7 @@ Xm_nl = 10;
 Ym_nl = 10;
 N_x = 100;
 N_y = 100;
-Tn = 10;
+Tn = 7;
 f0 = 0.5*10^12;
 
 % Useful constants
@@ -57,8 +57,8 @@ e2 = e0;
 % end
 
 % Graphene Characteristics
-A_gr = 0.1166; %0.02344;
-tau_gr = 3.3151e-12; %6.648e-13;
+A_gr = 100000.1166; %0.02344;
+tau_gr = 3.3151e-6; %6.648e-13;
 pos_gr = Npml + N_x/2; 
 
 
@@ -181,7 +181,7 @@ for t = 0:dt:Tmax
     Hz, Ex, Ey, Da_pml, Db_pml, Npml, N_x, N_y);
 
 
-    pcolor(real(Ex(Npml+1:Npml+N_y+1,1:2*Npml+N_y)));
+    pcolor(real(Hz(Npml+1:Npml+N_y+1,1:2*Npml+N_y)));
     shading interp;
     drawnow;
 
