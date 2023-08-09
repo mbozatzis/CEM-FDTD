@@ -2,6 +2,7 @@ clc;
 clear;
 
 addpath("3D/PML/");
+addpath("3D/TFSF/");
 
 % Extract options
 Xm_nl = 6;
