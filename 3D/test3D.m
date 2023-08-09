@@ -39,6 +39,15 @@ N_x_new = Nx + 2*Npml;
 N_y_new = Ny + 2*Npml;
 N_z_new = Nz + 2*Npml;
 
+% TFSF Characteristics
+Ntfsf = 8;
+fi = 0;
+theta = 0;
+psi = 0;
+tf_region_start = [Npml+Ntfsf, Npml+Ntfsf, Npml+Ntfsf];   
+tf_region_end = [Nx+Npml-Ntfsf, Ny+Npml-Ntfsf, Nz+Npml-Ntfsf]; 
+up_fi_up = 1;
+
 % Regular Field Matrices
 Ex = zeros(N_x_new+1, N_y_new+1, N_z_new+1);
 Ey = zeros(N_x_new+1, N_y_new+1, N_z_new+1);
@@ -63,7 +72,21 @@ Hyz = zeros(N_x_new, N_y_new+1, N_z_new);
 Hzx = zeros(N_x_new, N_y_new, N_z_new+1);
 Hzy = zeros(N_x_new, N_y_new, N_z_new+1);
 
+% TFSF Incident Field Matrices
+Ex_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+Ey_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+Ez_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+
+Hx_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+Hy_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+Hz_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
+
 % e = e0 * ones(N_x, N_y, N_z);
+
+% Define Auxilary Field for TFSF
+aux_size = ceil(Nx*sqrt(2)+4);
+E_aux = zeros(aux_size + 1, 1);
+H_aux = zeros(aux_size, 1);
 
 % Constants for field updating
 Ce = dt/e0;
@@ -171,7 +194,28 @@ for t = 0:dt:Tmax
     Ce, Npml, Nx, Ny, Nz, dx, dy, dz);
 
     % Update source
-    Ex(floor(N_x_new/2), floor(N_y_new/2), floor(N_z_new/2)) = sin(2*pi*f0*t);
+    %Ex(floor(N_x_new/2), floor(N_y_new/2), floor(N_z_new/2)) = sin(2*pi*f0*t);
+
+    % Ez Correction on the TFSF boundaries
+    [Ex, Ey, Ez] = updateBoundE(Ex, Ey, Ez, Hx_inc, Hy_inc, Hz_inc, ...
+        tf_region_start, tf_region_end, dx, dy, dz, dt);
+
+    % Update Auxilary field E
+    E_aux_prev_max = E_aux(aux_size);
+    for i = 2:aux_size
+        E_aux(i) = E_aux(i) + dt/(up_fi_up*e0*dx)*(H_aux(i-1) - H_aux(i));
+    end
+
+    % Auxilary field boundary (Mur 1st)
+    E_aux(aux_size+1) = E_aux_prev_max - (dx-up_fi_up*c0*dt)/(dx+up_fi_up*c0*dt) ...
+        *(E_aux(aux_size) - E_aux(aux_size+1));
+
+    % Update source on the Auxilary Field
+    E_aux(1) = sin(2*pi*f0*t);
+    
+    % Calculate incident field Ez from Auxilary field E
+    [Ex_inc, Ey_inc, Ez_inc] = IncFromAuxE(E_aux, Ex_inc, Ey_inc, ...
+        Ez_inc, fi, theta, psi, tf_region_start, tf_region_end);
 
     % Update PML Electric
     [Exy, Exz, Eyx, Eyz, Ezx, Ezy, Ex, Ey, Ez] = updateElectricPML(Exy, Exz, Eyx, Eyz, ...
@@ -181,6 +225,19 @@ for t = 0:dt:Tmax
     % Update Magnetic Fields
     [Hx, Hy, Hz] = updateMagneticField(Hx, Hy, Hz, Ex, Ey, Ez, ...
     Cm, Npml, Nx, Ny, Nz, dx, dy, dz);
+
+    % Update Auxilary field H
+    for i = 1:aux_size
+        H_aux(i) = H_aux(i) + dt/(up_fi_up*m0*dx)*(E_aux(i) - E_aux(i+1));
+    end
+    
+    % H Correction on the TFSF boundaries
+    [Hx, Hy, Hz] = updateBoundH(Hx, Hy, Hz, Ex_inc, Ey_inc, Ez_inc, ...
+        tf_region_start, tf_region_end, dx, dy, dz, dt);
+
+    % Calculate incident field Hx and Hy from Auxilary field H
+    [Hx_inc, Hy_inc, Hz_inc] = IncFromAuxH(H_aux, Hx_inc, Hy_inc, ...
+        Hz_inc, fi, theta, psi, tf_region_start, tf_region_end);
 
     % Update PML Magnetic
     [Hxy, Hxz, Hyx, Hyz, Hzx, Hzy, Hx, Hy, Hz] = updateMagneticPML(Hxy, Hxz, ...
