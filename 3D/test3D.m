@@ -40,10 +40,10 @@ N_y_new = Ny + 2*Npml;
 N_z_new = Nz + 2*Npml;
 
 % TFSF Characteristics
-Ntfsf = 8;
-fi = 0;
-theta = 0;
-psi = 0;
+Ntfsf = 5;
+fi = pi/4;
+theta = pi/4;
+psi = pi/4;
 tf_region_start = [Npml+Ntfsf, Npml+Ntfsf, Npml+Ntfsf];   
 tf_region_end = [Nx+Npml-Ntfsf, Ny+Npml-Ntfsf, Nz+Npml-Ntfsf]; 
 up_fi_up = 1;
@@ -245,7 +245,7 @@ for t = 0:dt:Tmax
         Dbx_pml, Dby_pml, Dbz_pml, Npml, Nx, Ny, Nz);
 
 
-    slice(X,Y,Z,Ex(Npml+1:Npml+Ny, Npml+1:Npml+Ny, Npml+1:Npml+Ny) ...
+    slice(X,Y,Z,Ez(Npml+1:Npml+Ny, Npml+1:Npml+Ny, Npml+1:Npml+Ny) ...
         ,y(end)/2,x(end)/2,z(end)/2);
     axis([0 y(end) 0 x(end) 0 z(end)]);
     view([1 1 1]); 
