@@ -35,7 +35,7 @@ dt = 0.7*dx/(sqrt(3)*c0);
 Lx = 3 * 12;
 Ly = 3 * 12;
 h = 0.5 * 12;
-sr = 0.15 * 12;
+sr = 0.1 * 12;
 
 % PML Characteristics
 Npml = 8;
