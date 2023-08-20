@@ -5,9 +5,9 @@ addpath("3D/PML/");
 addpath("3D/TFSF/");
 
 % Extract options
-Xm_nl = 6;
-Ym_nl = 6;
-Zm_nl = 6;
+Xm_nl = 5;
+Ym_nl = 5;
+Zm_nl = 5;
 Nx = 60;
 Ny = 60;
 Nz = 60;
@@ -30,6 +30,11 @@ dz = Z_m/Nz;
 
 Tmax = Tn/f0;
 dt = 0.7*dx/(sqrt(3)*c0);
+
+% Geometry
+Lx = 1.8 * 12;
+Ly = 1.8 * 12;
+h = 0.2 * 12;
 
 % PML Characteristics
 Npml = 8;
@@ -81,7 +86,10 @@ Hx_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
 Hy_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
 Hz_inc = zeros(N_x_new+1, N_y_new+1, N_z_new);
 
-% e = e0 * ones(N_x, N_y, N_z);
+% Define Geometry
+e = e0 * ones(N_x_new, N_y_new, N_z_new);
+m = m0 * ones(N_x_new, N_y_new, N_z_new);
+
 
 % Define Auxilary Field for TFSF
 aux_size = ceil(Nx*sqrt(2)+4);
@@ -89,8 +97,8 @@ E_aux = zeros(aux_size + 1, 1);
 H_aux = zeros(aux_size, 1);
 
 % Constants for field updating
-Ce = dt/e0;
-Cm = dt/m0;
+Ce = dt./e;
+Cm = dt./m;
 
 % PML Conductivities    
 se = - (pow+1)*e0*c0*log(Rpml)/(2*dx*Npml);
